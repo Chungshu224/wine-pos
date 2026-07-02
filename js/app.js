@@ -206,7 +206,7 @@ async function renderStock() {
   const kw = $("#stock-search").value.trim();
   const rows = await api.getStock(kw);
   $("#stock-table").innerHTML = `
-    <tr><th>酒款</th><th>年份</th><th>容量</th><th>庫存</th><th>均價成本</th><th>定價</th></tr>
+    <tr><th>酒款</th><th>年份</th><th>容量</th><th>庫位</th><th>庫存</th><th>均價成本</th><th>定價</th></tr>
     ${rows
       .map(
         (r) => `
@@ -214,6 +214,7 @@ async function renderStock() {
         <td>${esc(r.name)}</td>
         <td>${r.vintage ?? "NV"}</td>
         <td>${r.volume_ml}ml</td>
+        <td>${esc(r.locations ?? "—")}</td>
         <td>${r.stock_qty}</td>
         <td>${r.avg_cost ? "$" + fmt(r.avg_cost) : "—"}</td>
         <td>$${fmt(r.list_price)}</td>

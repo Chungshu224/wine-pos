@@ -83,6 +83,7 @@ CREATE TABLE purchase_batches (
   unit_cost    NUMERIC(12,2) NOT NULL,  -- 單瓶進價
   qty_in       INTEGER NOT NULL CHECK (qty_in > 0),   -- 進貨數量
   qty_left     INTEGER NOT NULL CHECK (qty_left >= 0),-- 該批剩餘 (FIFO 扣減)
+  location     TEXT,                    -- 庫位
   note         TEXT,
   created_by   UUID REFERENCES profiles(id),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -98,7 +99,9 @@ SELECT
   COALESCE(SUM(b.qty_left), 0) AS stock_qty,
   CASE WHEN COALESCE(SUM(b.qty_left),0) > 0
        THEN ROUND(SUM(b.unit_cost * b.qty_left) / SUM(b.qty_left), 2)
-       ELSE NULL END AS avg_cost   -- 剩餘庫存的加權平均成本
+       ELSE NULL END AS avg_cost,  -- 剩餘庫存的加權平均成本
+  STRING_AGG(DISTINCT b.location, ', ' ORDER BY b.location)
+    FILTER (WHERE b.qty_left > 0 AND b.location IS NOT NULL) AS locations  -- 庫位（可能分散在多個庫位）
 FROM products p
 LEFT JOIN purchase_batches b ON b.product_id = p.id AND b.qty_left > 0
 WHERE p.is_active
