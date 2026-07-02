@@ -32,6 +32,7 @@ h1, h2, .brand, .brand-small { font-family: "Noto Serif TC", serif; }
   place-items: center;
   background: linear-gradient(160deg, var(--wine-deep), var(--wine));
 }
+#login-view[hidden] { display: none; }
 .login-card {
   background: var(--stone);
   padding: 2.5rem 2rem;
