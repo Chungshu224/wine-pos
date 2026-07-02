@@ -1,0 +1,164 @@
+/* ============================================
+   酒窖 POS — 樣式
+   配色取自酒窖：深酒紅、軟木色、石灰岩底
+   ============================================ */
+:root {
+  --wine: #5e1224;        /* 深酒紅（主色） */
+  --wine-deep: #3d0b18;   /* 更深，header 用 */
+  --cork: #b08d57;        /* 軟木金（強調） */
+  --stone: #f5f2ec;       /* 石灰岩底色 */
+  --ink: #2b2320;         /* 主要文字 */
+  --muted: #8a7f76;       /* 次要文字 */
+  --line: #e2dcd2;        /* 分隔線 */
+  --ok: #3e6b4f;
+  --warn: #a33b2e;
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: "Noto Sans TC", sans-serif;
+  background: var(--stone);
+  color: var(--ink);
+}
+
+h1, h2, .brand, .brand-small { font-family: "Noto Serif TC", serif; }
+
+/* ---------- 登入 ---------- */
+#login-view {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--wine-deep), var(--wine));
+}
+.login-card {
+  background: var(--stone);
+  padding: 2.5rem 2rem;
+  border-radius: 4px;
+  width: min(360px, 90vw);
+  border-top: 6px solid var(--cork);
+}
+.brand { font-size: 1.8rem; color: var(--wine); }
+.brand-sub { color: var(--muted); margin-bottom: 1.5rem; font-size: .9rem; }
+.login-card label { display: block; margin-bottom: 1rem; font-size: .85rem; color: var(--muted); }
+.login-card input {
+  width: 100%; margin-top: .3rem; padding: .6rem;
+  border: 1px solid var(--line); border-radius: 3px; font-size: 1rem;
+  background: #fff;
+}
+.error-msg { color: var(--warn); font-size: .85rem; margin-top: .8rem; }
+
+/* ---------- 按鈕 ---------- */
+.btn-primary {
+  width: 100%; padding: .7rem; border: none; border-radius: 3px;
+  background: var(--wine); color: #fff; font-size: 1rem; cursor: pointer;
+  font-weight: 500;
+}
+.btn-primary:hover { background: var(--wine-deep); }
+.btn-primary:disabled { background: var(--muted); cursor: not-allowed; }
+.btn-ghost {
+  background: none; border: 1px solid rgba(255,255,255,.4); color: #fff;
+  padding: .3rem .8rem; border-radius: 3px; cursor: pointer; font-size: .85rem;
+}
+
+/* ---------- Header ---------- */
+header {
+  display: flex; align-items: center; gap: 1.5rem;
+  background: var(--wine-deep); color: #fff;
+  padding: .6rem 1.2rem;
+}
+.brand-small { font-size: 1.1rem; color: var(--cork); }
+nav { display: flex; gap: .3rem; flex: 1; }
+.tab {
+  background: none; border: none; color: rgba(255,255,255,.7);
+  padding: .5rem 1rem; cursor: pointer; font-size: .95rem;
+  border-bottom: 2px solid transparent;
+}
+.tab.active { color: #fff; border-bottom-color: var(--cork); }
+.user-area { display: flex; align-items: center; gap: .8rem; font-size: .85rem; }
+
+/* ---------- 頁面通用 ---------- */
+.page { padding: 1.2rem; }
+input[type="search"], input[type="number"], select {
+  padding: .55rem .8rem; border: 1px solid var(--line); border-radius: 3px;
+  font-size: .95rem; background: #fff;
+}
+.page-toolbar { display: flex; gap: .8rem; margin-bottom: 1rem; }
+.page-toolbar input { flex: 1; }
+.page-toolbar .btn-primary { width: auto; padding: .55rem 1.2rem; }
+
+/* ---------- 開單頁 ---------- */
+#page-pos { display: grid; grid-template-columns: 1fr 340px; gap: 1.2rem; }
+.pos-left input[type="search"] { width: 100%; margin-bottom: 1rem; }
+.product-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: .8rem;
+}
+.product-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 4px;
+  padding: .8rem; cursor: pointer; transition: border-color .15s;
+}
+.product-card:hover { border-color: var(--cork); }
+.product-card.oos { opacity: .45; cursor: not-allowed; }
+.p-name { font-weight: 500; font-size: .9rem; line-height: 1.3; }
+.p-meta { color: var(--muted); font-size: .78rem; margin: .3rem 0; }
+.p-row { display: flex; justify-content: space-between; font-size: .85rem; }
+.p-price { color: var(--wine); font-weight: 700; }
+.p-stock { color: var(--muted); }
+
+.pos-cart {
+  background: #fff; border: 1px solid var(--line); border-radius: 4px;
+  padding: 1rem; align-self: start; position: sticky; top: 1rem;
+}
+.pos-cart h2 { font-size: 1.05rem; margin-bottom: .8rem; color: var(--wine); }
+.customer-box { position: relative; margin-bottom: .8rem; }
+.customer-box input { width: 100%; }
+#customer-results {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 5;
+  background: #fff; border: 1px solid var(--line); border-top: none;
+}
+.cust-pick { padding: .5rem .8rem; cursor: pointer; font-size: .88rem; }
+.cust-pick:hover { background: var(--stone); }
+
+.cart-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .6rem 0; border-bottom: 1px solid var(--line); font-size: .88rem;
+}
+.c-vintage { color: var(--muted); font-size: .78rem; }
+.c-price { width: 90px; margin-top: .3rem; padding: .25rem .4rem !important; }
+.c-qty { display: flex; align-items: center; gap: .5rem; }
+.c-qty button {
+  width: 26px; height: 26px; border: 1px solid var(--line); background: #fff;
+  border-radius: 3px; cursor: pointer; font-size: 1rem; line-height: 1;
+}
+.cart-footer { margin-top: 1rem; display: grid; gap: .6rem; }
+.cart-line { display: flex; justify-content: space-between; align-items: center; font-size: .9rem; }
+.cart-line input { width: 100px; text-align: right; }
+.cart-line.total { font-size: 1.15rem; font-weight: 700; color: var(--wine); }
+
+/* ---------- 表格 ---------- */
+.data-table {
+  width: 100%; border-collapse: collapse; background: #fff;
+  border: 1px solid var(--line); border-radius: 4px; margin-top: 1rem;
+  font-size: .88rem;
+}
+.data-table th {
+  text-align: left; padding: .6rem .8rem; background: var(--stone);
+  border-bottom: 2px solid var(--line); font-weight: 500; color: var(--muted);
+}
+.data-table td { padding: .55rem .8rem; border-bottom: 1px solid var(--line); }
+.low-stock td { color: var(--warn); }
+.log-detail { color: var(--muted); }
+
+/* ---------- 手機版 ---------- */
+@media (max-width: 800px) {
+  #page-pos { grid-template-columns: 1fr; }
+  .pos-cart { position: static; }
+  header { flex-wrap: wrap; gap: .6rem; }
+  nav { order: 3; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

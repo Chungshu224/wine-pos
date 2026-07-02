@@ -1,0 +1,10 @@
+{
+  "name": "wine-pos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.0",
+    "csv-parse": "^7.0.0"
+  }
+}
