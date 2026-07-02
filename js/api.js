@@ -28,6 +28,12 @@ export async function addProduct(product) {
   return data;
 }
 
+// 軟刪除：下架該酒款（不動歷史進貨/訂單紀錄，只是不再顯示於開單/庫存）
+export async function deactivateProduct(id) {
+  const { error } = await sb.from("products").update({ is_active: false }).eq("id", id);
+  if (error) throw error;
+}
+
 // ---------- 進貨 ----------
 export async function addPurchase(batch) {
   // batch: { product_id, supplier, unit_cost, qty_in, note }

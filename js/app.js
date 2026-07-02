@@ -33,6 +33,7 @@ async function init() {
 
   // 庫存頁
   $("#stock-search").addEventListener("input", debounce(renderStock, 300));
+  $("#add-product-btn").addEventListener("click", handleAddProduct);
 
   // 客戶頁
   $("#cust-search").addEventListener("input", debounce(renderCustomers, 300));
@@ -206,7 +207,7 @@ async function renderStock() {
   const kw = $("#stock-search").value.trim();
   const rows = await api.getStock(kw);
   $("#stock-table").innerHTML = `
-    <tr><th>酒款</th><th>年份</th><th>容量</th><th>庫位</th><th>庫存</th><th>均價成本</th><th>定價</th></tr>
+    <tr><th>酒款</th><th>年份</th><th>容量</th><th>庫位</th><th>庫存</th><th>均價成本</th><th>定價</th><th></th></tr>
     ${rows
       .map(
         (r) => `
@@ -218,9 +219,45 @@ async function renderStock() {
         <td>${r.stock_qty}</td>
         <td>${r.avg_cost ? "$" + fmt(r.avg_cost) : "—"}</td>
         <td>$${fmt(r.list_price)}</td>
+        <td><button class="btn-link-danger" data-id="${r.product_id}" data-name="${esc(r.name)}">刪除</button></td>
       </tr>`
       )
       .join("")}`;
+
+  $$("#stock-table .btn-link-danger").forEach((btn) =>
+    btn.addEventListener("click", () => handleDeleteProduct(btn.dataset.id, btn.dataset.name))
+  );
+}
+
+async function handleAddProduct() {
+  const name = prompt("酒款名稱：");
+  if (!name) return;
+  const producer = prompt("酒莊（可空）：") || null;
+  const wine_type =
+    prompt("類型 red/white/rose/sparkling/sweet/fortified/spirits/other（預設 red）：") || "red";
+  const vintageInput = prompt("年份（NV 酒可留空）：");
+  const vintage = vintageInput ? parseInt(vintageInput) || null : null;
+  const volumeInput = prompt("容量 ml（預設 750）：");
+  const volume_ml = volumeInput ? parseInt(volumeInput) || 750 : 750;
+  const priceInput = prompt("定價：");
+  const list_price = priceInput ? parseFloat(priceInput) || 0 : 0;
+
+  try {
+    await api.addProduct({ name, producer, wine_type, vintage, volume_ml, list_price });
+    renderStock();
+  } catch (e) {
+    alert("新增失敗：" + e.message);
+  }
+}
+
+async function handleDeleteProduct(id, name) {
+  if (!confirm(`確定要刪除「${name}」嗎？\n（不會刪除歷史進貨/訂單紀錄，只會從開單、庫存頁下架）`)) return;
+  try {
+    await api.deactivateProduct(id);
+    renderStock();
+  } catch (e) {
+    alert("刪除失敗：" + e.message);
+  }
 }
 
 // ============================================
