@@ -287,10 +287,9 @@ input[type="search"], input[type="number"], select {
 /* ---------- 客戶頁表格欄寬 ---------- */
 #cust-table { table-layout: fixed; }
 #cust-table th, #cust-table td { overflow-wrap: break-word; }
-#cust-table th:nth-child(1), #cust-table td:nth-child(1) { width: 10%; } /* 統一編號 */
-#cust-table th:nth-child(2), #cust-table td:nth-child(2) { width: 16%; } /* 姓名／名稱 */
+#cust-table th:nth-child(1), #cust-table td:nth-child(1) { width: 16%; } /* 姓名／名稱 */
+#cust-table th:nth-child(2), #cust-table td:nth-child(2) { width: 12%; } /* 統一編號 */
 #cust-table th:nth-child(3), #cust-table td:nth-child(3) { width: 12%; } /* 電話 */
-#cust-table th:nth-child(4), #cust-table td:nth-child(4) { width: 18%; } /* Email */
-#cust-table th:nth-child(5), #cust-table td:nth-child(5) { width: 22%; } /* 地址 */
-#cust-table th:nth-child(6), #cust-table td:nth-child(6) { width: 14%; } /* 備註 */
-#cust-table th:nth-child(7), #cust-table td:nth-child(7) { width: 8%; white-space: nowrap; } /* 操作 */
+#cust-table th:nth-child(4), #cust-table td:nth-child(4) { width: 28%; } /* 地址 */
+#cust-table th:nth-child(5), #cust-table td:nth-child(5) { width: 22%; } /* 備註 */
+#cust-table th:nth-child(6), #cust-table td:nth-child(6) { width: 10%; white-space: nowrap; } /* 操作 */

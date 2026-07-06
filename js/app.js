@@ -359,15 +359,14 @@ async function renderCustomers() {
   const kw = $("#cust-search").value.trim();
   const rows = await api.getCustomers(kw);
   $("#cust-table").innerHTML = `
-    <tr><th>統一編號</th><th>姓名／名稱</th><th>電話</th><th>Email</th><th>地址</th><th>備註</th><th></th></tr>
+    <tr><th>姓名／名稱</th><th>統一編號</th><th>電話</th><th>地址</th><th>備註</th><th></th></tr>
     ${rows
       .map(
         (c, i) => `
       <tr>
-        <td>${esc(c.tax_id ?? "")}</td>
         <td>${esc(c.name)}</td>
+        <td>${esc(c.tax_id ?? "")}</td>
         <td>${esc(c.phone ?? "")}</td>
-        <td>${esc(c.email ?? "")}</td>
         <td>${esc(c.address ?? "")}</td>
         <td>${esc(c.note ?? "")}</td>
         <td class="row-actions">
