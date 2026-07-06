@@ -35,6 +35,7 @@
         <button class="tab" data-tab="stock">庫存</button>
         <button class="tab" data-tab="customers">客戶</button>
         <button class="tab" data-tab="orders">訂單<span id="payment-badge" class="tab-badge" hidden></span></button>
+        <button class="tab" data-tab="statement">對帳單</button>
         <button class="tab" data-tab="log">紀錄</button>
       </nav>
       <div class="user-area">
@@ -109,6 +110,23 @@
       </div>
       <table id="orders-table" class="data-table"></table>
       <div id="orders-pagination" class="pagination"></div>
+    </main>
+
+    <!-- 對帳單頁 -->
+    <main id="page-statement" class="page" hidden>
+      <div class="page-toolbar stmt-toolbar">
+        <label class="stmt-mode"><input type="radio" name="stmt-mode" value="month" checked> 月份</label>
+        <input type="month" id="stmt-month">
+        <label class="stmt-mode"><input type="radio" name="stmt-mode" value="range"> 日期區間</label>
+        <input type="date" id="stmt-date-from" disabled>
+        <span class="toolbar-sep">—</span>
+        <input type="date" id="stmt-date-to" disabled>
+        <select id="stmt-customer">
+          <option value="">請選擇客戶…</option>
+        </select>
+        <button id="stmt-preview-btn" class="btn-primary" disabled>預覽 / 列印</button>
+      </div>
+      <p id="stmt-msg" class="hint-msg"></p>
     </main>
 
     <!-- 操作紀錄頁 -->

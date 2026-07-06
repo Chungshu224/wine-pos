@@ -231,6 +231,15 @@ input[type="search"], input[type="number"], input[type="text"], select {
 .status-chip.completed { background: #d4edda; color: var(--ok); }
 .status-chip.void { background: #f8d7da; color: var(--warn); }
 .order-total { font-weight: 500; }
+.invoice-no-input { width: 110px; }
+
+/* ---------- 對帳單頁 ---------- */
+.stmt-toolbar input[type="date"], .stmt-toolbar input[type="month"] {
+  padding: .55rem .8rem; border: 1px solid var(--line);
+  border-radius: 3px; font-size: .95rem; background: #fff;
+}
+.stmt-mode { display: flex; align-items: center; gap: .35rem; font-size: .9rem; white-space: nowrap; }
+.hint-msg { color: var(--muted); font-size: .88rem; margin-top: .5rem; }
 .pagination {
   display: flex; align-items: center; gap: .8rem;
   margin-top: 1rem; font-size: .88rem; justify-content: center;

@@ -55,6 +55,19 @@ async function init() {
   $("#pay-modal-backdrop").addEventListener("click", closePayModal);
   $("#pay-modal-cancel").addEventListener("click", closePayModal);
   $("#pay-form").addEventListener("submit", submitPayModal);
+
+  // 對帳單頁
+  $$('input[name="stmt-mode"]').forEach((r) => r.addEventListener("change", () => {
+    setStatementMode(r.value);
+    renderStatementCustomers();
+  }));
+  $("#stmt-month").addEventListener("change", renderStatementCustomers);
+  $("#stmt-date-from").addEventListener("change", renderStatementCustomers);
+  $("#stmt-date-to").addEventListener("change", renderStatementCustomers);
+  $("#stmt-customer").addEventListener("change", () => {
+    $("#stmt-preview-btn").disabled = !$("#stmt-customer").value;
+  });
+  $("#stmt-preview-btn").addEventListener("click", handleStatementPreview);
 }
 
 async function handleLogin() {
@@ -86,6 +99,7 @@ function switchTab(tab) {
   if (tab === "stock") renderStock();
   if (tab === "customers") renderCustomers();
   if (tab === "orders") { renderOrders(); checkPaymentReminders(); }
+  if (tab === "statement") { initStatementDefaults(); renderStatementCustomers(); }
   if (tab === "log") renderLog();
 }
 
@@ -541,7 +555,7 @@ async function renderOrders() {
   });
 
   $("#orders-table").innerHTML = `
-    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>收款</th><th></th></tr>
+    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>發票號碼</th><th>收款</th><th></th></tr>
     ${rows.map((r) => `
       <tr>
         <td>${new Date(r.created_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
@@ -551,6 +565,7 @@ async function renderOrders() {
         <td class="order-total">$${fmt(r.total)}</td>
         <td>${esc(r.customers?.name ?? "散客")}</td>
         <td>${r.order_items?.length ?? 0} 件</td>
+        <td><input type="text" class="invoice-no-input" data-id="${r.id}" value="${esc(r.invoice_no ?? "")}" placeholder="選填"></td>
         <td>${paymentStatusCell(r)}</td>
         <td><button class="btn-link-print" data-id="${r.id}">列印</button></td>
       </tr>`).join("")}`;
@@ -560,6 +575,15 @@ async function renderOrders() {
   );
   $$("#orders-table .btn-link-print").forEach((btn) =>
     btn.addEventListener("click", () => printOrder(Number(btn.dataset.id)))
+  );
+  $$("#orders-table .invoice-no-input").forEach((input) =>
+    input.addEventListener("change", async () => {
+      try {
+        await api.updateOrderInvoice(Number(input.dataset.id), input.value.trim());
+      } catch (e) {
+        alert("儲存發票號碼失敗：" + e.message);
+      }
+    })
   );
   const totalPages = Math.ceil(count / ORDERS_PER_PAGE);
   const pg = $("#orders-pagination");
@@ -712,6 +736,163 @@ async function printOrder(orderId) {
   </div>
   <div class="footer">
     <div><strong>備註</strong><br>${esc(order.note ?? "")}</div>
+    <div class="footer-right">法侍酒業</div>
+  </div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+}
+
+// ============================================
+// 對帳單頁
+// ============================================
+function getStatementPeriod() {
+  const mode = document.querySelector('input[name="stmt-mode"]:checked').value;
+  if (mode === "month") {
+    const val = $("#stmt-month").value; // "YYYY-MM"
+    if (!val) return { dateFrom: "", dateTo: "" };
+    const [y, m] = val.split("-").map(Number);
+    return { dateFrom: ymd(new Date(y, m - 1, 1)), dateTo: ymd(new Date(y, m, 0)) };
+  }
+  return { dateFrom: $("#stmt-date-from").value, dateTo: $("#stmt-date-to").value };
+}
+
+function setStatementMode(mode) {
+  $("#stmt-month").disabled = mode !== "month";
+  $("#stmt-date-from").disabled = mode !== "range";
+  $("#stmt-date-to").disabled = mode !== "range";
+}
+
+function initStatementDefaults() {
+  if (!$("#stmt-month").value) {
+    const now = new Date();
+    $("#stmt-month").value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+}
+
+async function renderStatementCustomers() {
+  const { dateFrom, dateTo } = getStatementPeriod();
+  const sel = $("#stmt-customer");
+  const prevValue = sel.value;
+  const msg = $("#stmt-msg");
+  msg.textContent = "";
+
+  if (!dateFrom || !dateTo) {
+    sel.innerHTML = `<option value="">請先選擇期間</option>`;
+    $("#stmt-preview-btn").disabled = true;
+    return;
+  }
+
+  let customers;
+  try {
+    customers = await api.getCustomersWithOrders({ dateFrom, dateTo });
+  } catch (e) {
+    msg.textContent = "載入客戶清單失敗：" + e.message;
+    return;
+  }
+
+  if (customers.length === 0) {
+    sel.innerHTML = `<option value="">此期間無訂單客戶</option>`;
+    $("#stmt-preview-btn").disabled = true;
+    return;
+  }
+  sel.innerHTML = `<option value="">請選擇客戶…</option>` +
+    customers.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if (customers.some((c) => String(c.id) === prevValue)) sel.value = prevValue;
+  $("#stmt-preview-btn").disabled = !sel.value;
+}
+
+async function handleStatementPreview() {
+  const customerId = Number($("#stmt-customer").value);
+  if (!customerId) return;
+  const { dateFrom, dateTo } = getStatementPeriod();
+  const btn = $("#stmt-preview-btn");
+  btn.disabled = true;
+  try {
+    const orders = await api.getOrdersForStatement({ customerId, dateFrom, dateTo });
+    if (orders.length === 0) {
+      alert("此客戶在所選期間內沒有訂單");
+      return;
+    }
+    printStatement(orders, dateFrom, dateTo);
+  } catch (e) {
+    alert("產生對帳單失敗：" + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function printStatement(orders, dateFrom, dateTo) {
+  const cust = orders[0].customers;
+  const custBlock = `<p><strong>客戶：${esc(cust?.name ?? "")}</strong>${cust?.tax_title ? ` (${esc(cust.tax_title)})` : ""}</p>
+    ${cust?.tax_id ? `<p>統一編號：${esc(cust.tax_id)}</p>` : ""}
+    ${cust?.phone ? `<p>電話：${esc(cust.phone)}</p>` : ""}
+    ${cust?.address ? `<p>地址：${esc(cust.address)}</p>` : ""}`;
+
+  let grandTotal = 0;
+  let unpaidTotal = 0;
+  const orderRows = orders.map((o) => {
+    grandTotal += Number(o.total);
+    const paid = o.payment_method === "card" || o.paid_at;
+    if (!paid) unpaidTotal += Number(o.total);
+    const itemsSummary = (o.order_items ?? [])
+      .map((it) => `${esc(it.products?.name ?? "")} ×${it.qty}`)
+      .join("、");
+    return `<tr>
+      <td>${new Date(o.created_at).toLocaleDateString("zh-TW")}</td>
+      <td>${esc(o.order_no)}</td>
+      <td>${itemsSummary}</td>
+      <td style="text-align:right">$${fmt(o.total)}</td>
+      <td style="text-align:center">${paid ? "已收款" : "未收款"}</td>
+    </tr>`;
+  }).join("");
+
+  const periodLabel = `${dateFrom} ~ ${dateTo}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>法侍酒業對帳單 ${esc(cust?.name ?? "")}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:"Noto Sans TC",sans-serif;max-width:800px;margin:2rem auto;padding:0 1.5rem;color:#222;font-size:14px}
+    h1{text-align:center;font-size:1.4rem;margin:1rem 0;padding-bottom:.6rem;border-bottom:2px solid #222}
+    .section{margin:1rem 0;line-height:1.8}
+    .order-meta{font-size:.88rem;color:#555;margin-bottom:1rem}
+    table{width:100%;border-collapse:collapse;margin-top:.5rem}
+    thead th{background:#f2f2f2;padding:.45rem .6rem;text-align:left;border-top:2px solid #333;border-bottom:2px solid #333;font-size:.88rem}
+    tbody td{padding:.4rem .6rem;border-bottom:1px solid #ddd;font-size:.9rem}
+    .totals{text-align:right;margin-top:1rem;line-height:2}
+    .totals .grand{font-size:1.25rem;font-weight:700}
+    .totals .unpaid{color:#b3261e}
+    .footer{display:flex;gap:2rem;margin-top:2rem;padding-top:1rem;border-top:1px solid #ddd;font-size:.85rem;color:#555;line-height:1.7}
+    .footer-right{margin-left:auto;text-align:right}
+    .print-btn{display:block;margin:0 auto 1.5rem;padding:.5rem 1.8rem;background:#5e1224;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:.95rem}
+    @media print{.print-btn{display:none}}
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">列印 / 儲存 PDF</button>
+  <h1>法侍酒業對帳單</h1>
+  <div class="section">${custBlock}</div>
+  <p class="order-meta">期間：${esc(periodLabel)}&emsp;列印日期：${new Date().toLocaleDateString("zh-TW")}</p>
+  <table>
+    <thead>
+      <tr><th>日期</th><th>單號</th><th>品項</th><th style="text-align:right">金額</th><th style="text-align:center">收款狀態</th></tr>
+    </thead>
+    <tbody>${orderRows}</tbody>
+  </table>
+  <div class="totals">
+    <div class="grand">總計 $${fmt(grandTotal)}</div>
+    ${unpaidTotal > 0 ? `<div class="unpaid">未收款 $${fmt(unpaidTotal)}</div>` : ""}
+  </div>
+  <div class="footer">
+    <div>簽收：___________________</div>
     <div class="footer-right">法侍酒業</div>
   </div>
 </body>

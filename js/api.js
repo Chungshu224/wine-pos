@@ -162,6 +162,51 @@ export async function confirmPayment(orderId, { paidAt, paidMethod }) {
   if (error) throw error;
 }
 
+// ---------- 對帳單 ----------
+export async function getCustomersWithOrders({ dateFrom = "", dateTo = "" } = {}) {
+  let q = sb
+    .from("orders")
+    .select("customer_id, customers(id, name)")
+    .eq("status", "completed")
+    .not("customer_id", "is", null);
+  if (dateFrom) q = q.gte("created_at", dateFrom);
+  if (dateTo) q = q.lte("created_at", dateTo + "T23:59:59");
+
+  const { data, error } = await q;
+  if (error) throw error;
+
+  const map = new Map();
+  for (const r of data) {
+    if (r.customers) map.set(r.customers.id, r.customers.name);
+  }
+  return [...map.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+export async function getOrdersForStatement({ customerId, dateFrom = "", dateTo = "" }) {
+  let q = sb
+    .from("orders")
+    .select("*, customers(name, phone, address, tax_id, tax_title), order_items(qty, unit_price, line_total, products(name, vintage, volume_ml))")
+    .eq("customer_id", customerId)
+    .eq("status", "completed")
+    .order("created_at");
+  if (dateFrom) q = q.gte("created_at", dateFrom);
+  if (dateTo) q = q.lte("created_at", dateTo + "T23:59:59");
+
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
+export async function updateOrderInvoice(orderId, invoiceNo) {
+  const { error } = await sb
+    .from("orders")
+    .update({ invoice_no: invoiceNo || null })
+    .eq("id", orderId);
+  if (error) throw error;
+}
+
 export async function getUnpaidOrders() {
   const { data, error } = await sb
     .from("orders")

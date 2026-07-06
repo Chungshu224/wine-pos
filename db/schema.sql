@@ -157,7 +157,8 @@ CREATE TABLE orders (
   paid_method   TEXT CHECK (paid_method IN ('cash','transfer')),  -- 實際收款方式
   paid_by       UUID REFERENCES profiles(id),           -- 誰確認收款
   voided_by     UUID REFERENCES profiles(id),
-  voided_at     TIMESTAMPTZ
+  voided_at     TIMESTAMPTZ,
+  invoice_no    TEXT                                    -- 發票號碼（可事後補填）
 );
 
 CREATE INDEX idx_orders_customer ON orders (customer_id);
