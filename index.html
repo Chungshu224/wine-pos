@@ -60,8 +60,18 @@
         <div class="cart-footer">
           <div class="cart-line"><span>小計</span><span>$<span id="cart-subtotal">0</span></span></div>
           <div class="cart-line">
-            <span>折讓</span>
-            <input type="number" id="order-discount" placeholder="0" min="0">
+            <span>折扣</span>
+            <select id="discount-rate">
+              <option value="1">無折扣</option>
+              <option value="0.8">八折</option>
+              <option value="0.7">七折</option>
+              <option value="0.65">六五折</option>
+              <option value="0.6">六折</option>
+              <option value="0">免費</option>
+            </select>
+          </div>
+          <div id="cart-discount-line" class="cart-line" style="display:none">
+            <span>折扣金額</span><span style="color:var(--ok)">-$<span id="cart-discount-amt">0</span></span>
           </div>
           <div class="cart-line total"><span>總計</span><span>$<span id="cart-total">0</span></span></div>
           <select id="payment-method">

@@ -4,7 +4,19 @@
 // ============================================
 import { sb } from "./auth.js";
 
-// ---------- 庫存 ----------
+// ---------- 庫存（POS 預設清單，依銷量排序） ----------
+export async function getPopularProducts() {
+  const { data, error } = await sb
+    .from("v_popular_products")
+    .select("*")
+    .gt("stock_qty", 0)
+    .order("total_sold", { ascending: false })
+    .order("name");
+  if (error) return getStock(""); // fallback if view not yet created
+  return data;
+}
+
+// ---------- 庫存（彙總，POS 搜尋用） ----------
 export async function getStock(keyword = "") {
   let q = sb.from("v_stock").select("*").order("name");
   if (keyword) q = q.ilike("name", `%${keyword}%`);

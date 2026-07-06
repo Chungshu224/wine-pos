@@ -122,6 +122,17 @@ LEFT JOIN purchase_batches b ON b.product_id = p.id AND b.qty_left > 0
 WHERE p.is_active
 GROUP BY p.id, p.name, p.producer, p.vintage, p.volume_ml, p.list_price, b.location;
 
+-- 人氣排行（POS 預設清單用，依歷史銷量排序）
+CREATE VIEW v_popular_products AS
+SELECT
+  vs.product_id, vs.name, vs.vintage, vs.volume_ml, vs.list_price, vs.stock_qty,
+  COALESCE(cnt.total_sold, 0) AS total_sold
+FROM v_stock vs
+LEFT JOIN (
+  SELECT product_id, SUM(qty) AS total_sold
+  FROM order_items GROUP BY product_id
+) cnt ON cnt.product_id = vs.product_id;
+
 -- ------------------------------------------------------------
 -- 5. 銷售訂單
 -- ------------------------------------------------------------

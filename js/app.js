@@ -85,11 +85,7 @@ function switchTab(tab) {
 // ============================================
 async function renderPosProducts() {
   const kw = $("#pos-search").value.trim();
-  if (!kw) {
-    $("#pos-products").innerHTML = `<p class="pos-hint">請輸入酒款名稱搜尋</p>`;
-    return;
-  }
-  const rows = await api.getStock(kw);
+  const rows = kw ? await api.getStock(kw) : await api.getPopularProducts();
   $("#pos-products").innerHTML = rows
     .map(
       (r) => `
@@ -165,8 +161,16 @@ function renderCart() {
   );
 
   const subtotal = cart.reduce((s, c) => s + c.qty * c.unit_price, 0);
-  const discount = Number($("#order-discount").value) || 0;
+  const rate = Number($("#discount-rate").value);
+  const discount = Math.round(subtotal * (1 - rate));
   $("#cart-subtotal").textContent = fmt(subtotal);
+  const discLine = $("#cart-discount-line");
+  if (discount > 0) {
+    $("#cart-discount-amt").textContent = fmt(discount);
+    discLine.style.display = "";
+  } else {
+    discLine.style.display = "none";
+  }
   $("#cart-total").textContent = fmt(subtotal - discount);
   $("#checkout-btn").disabled = cart.length === 0;
 }
@@ -197,9 +201,11 @@ async function handleCheckout() {
   const btn = $("#checkout-btn");
   btn.disabled = true;
   try {
+    const subtotal = cart.reduce((s, c) => s + c.qty * c.unit_price, 0);
+    const rate = Number($("#discount-rate").value);
     const orderId = await api.createOrder({
       customerId: selectedCustomer?.id ?? null,
-      discount: Number($("#order-discount").value) || 0,
+      discount: Math.round(subtotal * (1 - rate)),
       payment: $("#payment-method").value,
       note: null,
       items: cart.map((c) => ({ product_id: c.product_id, qty: c.qty, unit_price: c.unit_price })),
@@ -208,7 +214,7 @@ async function handleCheckout() {
     cart = [];
     selectedCustomer = null;
     $("#customer-search").value = "";
-    $("#order-discount").value = "";
+    $("#discount-rate").value = "1";
     renderCart();
     renderPosProducts();
   } catch (e) {
@@ -568,5 +574,5 @@ function debounce(fn, ms) {
   };
 }
 
-// 折扣欄變動即時更新總計
-$("#order-discount").addEventListener("input", renderCart);
+// 折扣選單變動即時更新總計
+$("#discount-rate").addEventListener("change", renderCart);
