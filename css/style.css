@@ -249,3 +249,46 @@ input[type="search"], input[type="number"], select {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ---------- Modal ---------- */
+#cust-modal[hidden] { display: none; }
+#cust-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-backdrop {
+  position: absolute; inset: 0; background: rgba(0,0,0,.45);
+}
+.modal-box {
+  position: relative; z-index: 1;
+  background: var(--stone); border-radius: 6px;
+  padding: 1.8rem; width: min(560px, 94vw);
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  border-top: 5px solid var(--cork);
+}
+.modal-title { font-size: 1.1rem; color: var(--wine); margin-bottom: 1.2rem; }
+.modal-form label {
+  display: flex; flex-direction: column; gap: .3rem;
+  font-size: .85rem; color: var(--muted);
+}
+.modal-form input, .modal-form textarea {
+  padding: .55rem .8rem; border: 1px solid var(--line);
+  border-radius: 3px; font-size: .95rem; background: #fff; color: var(--ink);
+}
+.modal-form textarea { resize: vertical; }
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: .8rem;
+}
+.form-full { margin-bottom: .8rem; }
+.form-full label { width: 100%; }
+.required { color: var(--warn); }
+.modal-actions {
+  display: flex; gap: .8rem; justify-content: flex-end; margin-top: 1.2rem;
+}
+.btn-outline {
+  background: none; border: 1px solid var(--line); color: var(--ink);
+  padding: .55rem 1.2rem; border-radius: 3px; cursor: pointer; font-size: .95rem;
+}
+.btn-outline:hover { background: var(--line); }
+.modal-actions .btn-primary { width: auto; padding: .55rem 1.6rem; }

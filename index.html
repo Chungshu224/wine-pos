@@ -125,6 +125,47 @@
     <main id="page-log" class="page" hidden>
       <table id="log-table" class="data-table"></table>
     </main>
+
+    <!-- 客戶編輯 Modal -->
+    <div id="cust-modal" hidden>
+      <div class="modal-backdrop" id="cust-modal-backdrop"></div>
+      <div class="modal-box">
+        <h3 id="cust-modal-title" class="modal-title">編輯客戶</h3>
+        <form id="cust-form" class="modal-form">
+          <div class="form-grid">
+            <label>姓名／名稱 <span class="required">*</span>
+              <input id="cf-name" required placeholder="必填">
+            </label>
+            <label>統一編號
+              <input id="cf-tax-id" placeholder="選填">
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>電話
+              <input id="cf-phone" placeholder="選填">
+            </label>
+            <label>Email
+              <input id="cf-email" type="email" placeholder="選填">
+            </label>
+          </div>
+          <div class="form-full">
+            <label>地址
+              <input id="cf-address" placeholder="選填">
+            </label>
+          </div>
+          <div class="form-full">
+            <label>備註
+              <textarea id="cf-note" rows="4" placeholder="選填"></textarea>
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="cust-modal-cancel" class="btn-outline">取消</button>
+            <button type="submit" class="btn-primary">儲存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 
   <!-- Supabase JS (CDN) -->

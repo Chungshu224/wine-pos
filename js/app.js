@@ -41,6 +41,9 @@ async function init() {
   // 客戶頁
   $("#cust-search").addEventListener("input", debounce(renderCustomers, 300));
   $("#add-customer-btn").addEventListener("click", handleAddCustomer);
+  $("#cust-modal-cancel").addEventListener("click", closeCustomerModal);
+  $("#cust-modal-backdrop").addEventListener("click", closeCustomerModal);
+  $("#cust-form").addEventListener("submit", submitCustomerModal);
 
   // 訂單頁
   $("#order-search").addEventListener("input", debounce(() => { ordersPage = 0; renderOrders(); }, 300));
@@ -371,39 +374,55 @@ async function renderCustomers() {
       )
       .join("")}`;
   $$("#cust-table .btn-link-edit").forEach((btn) =>
-    btn.addEventListener("click", () => handleEditCustomer(rows[Number(btn.dataset.idx)]))
+    btn.addEventListener("click", () => openCustomerModal(rows[Number(btn.dataset.idx)]))
   );
 }
 
-async function handleAddCustomer() {
-  const name = prompt("客戶姓名／名稱：");
-  if (!name) return;
-  const tax_id = prompt("統一編號（可空）：") || null;
-  const phone = prompt("電話（可空）：") || null;
-  const email = prompt("Email（可空）：") || null;
-  const address = prompt("地址（可空）：") || null;
-  const note = prompt("備註（可空）：") || null;
-  try {
-    await api.addCustomer({ name, tax_id, phone, email, address, note });
-    renderCustomers();
-  } catch (e) {
-    alert("新增失敗：" + e.message);
-  }
+function handleAddCustomer() {
+  openCustomerModal(null);
 }
 
-async function handleEditCustomer(c) {
-  const name = prompt("客戶姓名／名稱：", c.name);
-  if (name === null) return;
-  const tax_id = prompt("統一編號（可空）：", c.tax_id ?? "") || null;
-  const phone = prompt("電話（可空）：", c.phone ?? "") || null;
-  const email = prompt("Email（可空）：", c.email ?? "") || null;
-  const address = prompt("地址（可空）：", c.address ?? "") || null;
-  const note = prompt("備註（可空）：", c.note ?? "") || null;
+// ---------- 客戶 Modal ----------
+let _custModalId = null;
+
+function openCustomerModal(c) {
+  _custModalId = c?.id ?? null;
+  $("#cust-modal-title").textContent = c ? "編輯客戶" : "新增客戶";
+  $("#cf-name").value    = c?.name    ?? "";
+  $("#cf-tax-id").value  = c?.tax_id  ?? "";
+  $("#cf-phone").value   = c?.phone   ?? "";
+  $("#cf-email").value   = c?.email   ?? "";
+  $("#cf-address").value = c?.address ?? "";
+  $("#cf-note").value    = c?.note    ?? "";
+  $("#cust-modal").hidden = false;
+  $("#cf-name").focus();
+}
+
+function closeCustomerModal() {
+  $("#cust-modal").hidden = true;
+}
+
+async function submitCustomerModal(e) {
+  e.preventDefault();
+  const fields = {
+    name:    $("#cf-name").value.trim(),
+    tax_id:  $("#cf-tax-id").value.trim()  || null,
+    phone:   $("#cf-phone").value.trim()   || null,
+    email:   $("#cf-email").value.trim()   || null,
+    address: $("#cf-address").value.trim() || null,
+    note:    $("#cf-note").value.trim()    || null,
+  };
+  if (!fields.name) return;
   try {
-    await api.updateCustomer(c.id, { name, tax_id, phone, email, address, note });
+    if (_custModalId) {
+      await api.updateCustomer(_custModalId, fields);
+    } else {
+      await api.addCustomer(fields);
+    }
+    closeCustomerModal();
     renderCustomers();
   } catch (e) {
-    alert("編輯失敗：" + e.message);
+    alert("儲存失敗：" + e.message);
   }
 }
 
