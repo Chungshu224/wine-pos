@@ -355,26 +355,56 @@ async function renderCustomers() {
   const kw = $("#cust-search").value.trim();
   const rows = await api.getCustomers(kw);
   $("#cust-table").innerHTML = `
-    <tr><th>姓名</th><th>電話</th><th>Email</th><th>備註</th></tr>
+    <tr><th>統一編號</th><th>姓名／名稱</th><th>電話</th><th>Email</th><th>地址</th><th>備註</th><th></th></tr>
     ${rows
       .map(
-        (c) => `
+        (c, i) => `
       <tr>
+        <td>${esc(c.tax_id ?? "")}</td>
         <td>${esc(c.name)}</td>
         <td>${esc(c.phone ?? "")}</td>
         <td>${esc(c.email ?? "")}</td>
+        <td>${esc(c.address ?? "")}</td>
         <td>${esc(c.note ?? "")}</td>
+        <td class="row-actions"><button class="btn-link-edit" data-idx="${i}">編輯</button></td>
       </tr>`
       )
       .join("")}`;
+  $$("#cust-table .btn-link-edit").forEach((btn) =>
+    btn.addEventListener("click", () => handleEditCustomer(rows[Number(btn.dataset.idx)]))
+  );
 }
 
 async function handleAddCustomer() {
-  const name = prompt("客戶姓名：");
+  const name = prompt("客戶姓名／名稱：");
   if (!name) return;
+  const tax_id = prompt("統一編號（可空）：") || null;
   const phone = prompt("電話（可空）：") || null;
-  await api.addCustomer({ name, phone });
-  renderCustomers();
+  const email = prompt("Email（可空）：") || null;
+  const address = prompt("地址（可空）：") || null;
+  const note = prompt("備註（可空）：") || null;
+  try {
+    await api.addCustomer({ name, tax_id, phone, email, address, note });
+    renderCustomers();
+  } catch (e) {
+    alert("新增失敗：" + e.message);
+  }
+}
+
+async function handleEditCustomer(c) {
+  const name = prompt("客戶姓名／名稱：", c.name);
+  if (name === null) return;
+  const tax_id = prompt("統一編號（可空）：", c.tax_id ?? "") || null;
+  const phone = prompt("電話（可空）：", c.phone ?? "") || null;
+  const email = prompt("Email（可空）：", c.email ?? "") || null;
+  const address = prompt("地址（可空）：", c.address ?? "") || null;
+  const note = prompt("備註（可空）：", c.note ?? "") || null;
+  try {
+    await api.updateCustomer(c.id, { name, tax_id, phone, email, address, note });
+    renderCustomers();
+  } catch (e) {
+    alert("編輯失敗：" + e.message);
+  }
 }
 
 // ============================================

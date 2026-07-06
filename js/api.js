@@ -101,6 +101,11 @@ export async function addCustomer(customer) {
   return data;
 }
 
+export async function updateCustomer(id, fields) {
+  const { error } = await sb.from("customers").update(fields).eq("id", id);
+  if (error) throw error;
+}
+
 // ---------- 開單（呼叫資料庫函式，FIFO 扣庫存防超賣） ----------
 export async function createOrder({ customerId, discount, payment, note, items }) {
   // items: [{ product_id, qty, unit_price }]
