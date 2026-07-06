@@ -319,7 +319,7 @@ async function renderOrders() {
   });
 
   $("#orders-table").innerHTML = `
-    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>備註</th></tr>
+    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>備註</th><th></th></tr>
     ${rows.map((r) => `
       <tr>
         <td>${new Date(r.created_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
@@ -330,8 +330,12 @@ async function renderOrders() {
         <td>${esc(r.customers?.name ?? "散客")}</td>
         <td>${r.order_items?.length ?? 0} 件</td>
         <td class="log-detail">${esc(r.note ?? "")}</td>
+        <td><button class="btn-link-print" data-id="${r.id}">列印</button></td>
       </tr>`).join("")}`;
 
+  $$("#orders-table .btn-link-print").forEach((btn) =>
+    btn.addEventListener("click", () => printOrder(Number(btn.dataset.id)))
+  );
   const totalPages = Math.ceil(count / ORDERS_PER_PAGE);
   const pg = $("#orders-pagination");
   if (totalPages <= 1) {
@@ -344,6 +348,90 @@ async function renderOrders() {
     <button id="orders-next" ${ordersPage >= totalPages - 1 ? "disabled" : ""}>下一頁</button>`;
   $("#orders-prev").addEventListener("click", () => { ordersPage--; renderOrders(); });
   $("#orders-next").addEventListener("click", () => { ordersPage++; renderOrders(); });
+}
+
+async function printOrder(orderId) {
+  let order;
+  try { order = await api.getOrderById(orderId); }
+  catch (e) { alert("載入失敗：" + e.message); return; }
+
+  const cust = order.customers;
+  const custBlock = cust
+    ? `<p><strong>客戶：${esc(cust.name)}</strong></p>
+       ${cust.phone   ? `<p>電話：${esc(cust.phone)}</p>` : ""}
+       ${cust.email   ? `<p>Email：${esc(cust.email)}</p>` : ""}
+       ${cust.address ? `<p>地址：${esc(cust.address)}</p>` : ""}`
+    : `<p>散客</p>`;
+
+  const itemRows = (order.order_items ?? []).map((it, i) => {
+    const p = it.products;
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${esc(p.name)}</td>
+      <td>${p.vintage ?? "NV"}</td>
+      <td>${p.volume_ml}ml</td>
+      <td style="text-align:right">$${fmt(it.unit_price)}</td>
+      <td style="text-align:right">${it.qty}</td>
+      <td style="text-align:right">$${fmt(it.line_total)}</td>
+    </tr>`;
+  }).join("");
+
+  const discountRow = order.discount > 0
+    ? `<div>折讓 &minus;$${fmt(order.discount)}</div>` : "";
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>法侍酒業訂單 ${esc(order.order_no)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:"Noto Sans TC",sans-serif;max-width:800px;margin:2rem auto;padding:0 1.5rem;color:#222;font-size:14px}
+    h1{text-align:center;font-size:1.4rem;margin:1rem 0;padding-bottom:.6rem;border-bottom:2px solid #222}
+    .section{margin:1rem 0;line-height:1.8}
+    .order-meta{font-size:.88rem;color:#555;margin-bottom:1rem}
+    table{width:100%;border-collapse:collapse;margin-top:.5rem}
+    thead th{background:#f2f2f2;padding:.45rem .6rem;text-align:left;border-top:2px solid #333;border-bottom:2px solid #333;font-size:.88rem}
+    tbody td{padding:.4rem .6rem;border-bottom:1px solid #ddd}
+    .totals{text-align:right;margin-top:1rem;line-height:2}
+    .totals .grand{font-size:1.25rem;font-weight:700}
+    .footer{display:flex;gap:2rem;margin-top:2rem;padding-top:1rem;border-top:1px solid #ddd;font-size:.85rem;color:#555;line-height:1.7}
+    .footer-right{margin-left:auto;text-align:right}
+    .print-btn{display:block;margin:0 auto 1.5rem;padding:.5rem 1.8rem;background:#5e1224;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:.95rem}
+    @media print{.print-btn{display:none}}
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">列印 / 儲存 PDF</button>
+  <h1>法侍酒業訂單</h1>
+  <div class="section">${custBlock}</div>
+  <p class="order-meta">
+    訂單編號：${esc(order.order_no)}&emsp;
+    日期：${new Date(order.created_at).toLocaleDateString("zh-TW")}&emsp;
+    付款：${PAYMENT_LABEL[order.payment_method] ?? order.payment_method}
+  </p>
+  <table>
+    <thead>
+      <tr><th>#</th><th>項目</th><th>年份</th><th>容量</th><th style="text-align:right">單價</th><th style="text-align:right">數量</th><th style="text-align:right">小計</th></tr>
+    </thead>
+    <tbody>${itemRows}</tbody>
+  </table>
+  <div class="totals">
+    <div>小計 $${fmt(order.subtotal)}</div>
+    ${discountRow}
+    <div class="grand">收款金額 $${fmt(order.total)}</div>
+  </div>
+  <div class="footer">
+    <div><strong>備註</strong><br>${esc(order.note ?? "")}</div>
+    <div class="footer-right">法侍酒業</div>
+  </div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
 }
 
 // ============================================

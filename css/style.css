@@ -156,6 +156,10 @@ input[type="search"], input[type="number"], select {
   background: none; border: none; color: var(--warn); cursor: pointer;
   font-size: .85rem; padding: .2rem .4rem; text-decoration: underline;
 }
+.btn-link-print {
+  background: none; border: none; color: var(--cork); cursor: pointer;
+  font-size: .85rem; padding: .2rem .4rem; text-decoration: underline;
+}
 .log-detail { color: var(--muted); }
 
 /* ---------- 訂單頁 ---------- */

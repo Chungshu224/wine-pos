@@ -103,6 +103,16 @@ export async function getOrders({ keyword = "", status = "", dateFrom = "", date
   return { data, count };
 }
 
+export async function getOrderById(id) {
+  const { data, error } = await sb
+    .from("orders")
+    .select("*, customers(name, phone, email, address), order_items(qty, unit_price, line_total, products(name, vintage, volume_ml))")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ---------- 操作紀錄 ----------
 export async function getAuditLog(limit = 100) {
   const { data, error } = await sb
