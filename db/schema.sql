@@ -126,6 +126,7 @@ GROUP BY p.id, p.name, p.producer, p.vintage, p.volume_ml, p.list_price, b.locat
 CREATE VIEW v_popular_products AS
 SELECT
   vs.product_id, vs.name, vs.vintage, vs.volume_ml, vs.list_price, vs.stock_qty,
+  vs.locations,
   COALESCE(cnt.total_sold, 0) AS total_sold
 FROM v_stock vs
 LEFT JOIN (
