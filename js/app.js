@@ -41,9 +41,10 @@ async function init() {
   // 客戶頁
   $("#cust-search").addEventListener("input", debounce(renderCustomers, 300));
   $("#add-customer-btn").addEventListener("click", handleAddCustomer);
-  $("#cust-modal-cancel").addEventListener("click", closeCustomerModal);
-  $("#cust-modal-backdrop").addEventListener("click", closeCustomerModal);
-  $("#cust-form").addEventListener("submit", submitCustomerModal);
+  $("#cust-edit-back").addEventListener("click", closeCustomerEdit);
+  $("#cust-edit-cancel").addEventListener("click", closeCustomerEdit);
+  $("#cust-delete-btn").addEventListener("click", handleDeleteCustomerFromEdit);
+  $("#cust-form").addEventListener("submit", submitCustomerEdit);
 
   // 訂單頁
   $("#order-search").addEventListener("input", debounce(() => { ordersPage = 0; renderOrders(); }, 300));
@@ -369,40 +370,50 @@ async function renderCustomers() {
         <td>${esc(c.email ?? "")}</td>
         <td>${esc(c.address ?? "")}</td>
         <td>${esc(c.note ?? "")}</td>
-        <td class="row-actions"><button class="btn-link-edit" data-idx="${i}">編輯</button></td>
+        <td class="row-actions">
+          <button class="btn-link-edit" data-idx="${i}">編輯</button>
+          <button class="btn-link-danger" data-id="${c.id}" data-name="${esc(c.name)}">刪除</button>
+        </td>
       </tr>`
       )
       .join("")}`;
   $$("#cust-table .btn-link-edit").forEach((btn) =>
-    btn.addEventListener("click", () => openCustomerModal(rows[Number(btn.dataset.idx)]))
+    btn.addEventListener("click", () => openCustomerEdit(rows[Number(btn.dataset.idx)]))
+  );
+  $$("#cust-table .btn-link-danger").forEach((btn) =>
+    btn.addEventListener("click", () => handleDeleteCustomer(btn.dataset.id, btn.dataset.name))
   );
 }
 
 function handleAddCustomer() {
-  openCustomerModal(null);
+  openCustomerEdit(null);
 }
 
-// ---------- 客戶 Modal ----------
-let _custModalId = null;
+// ---------- 客戶編輯頁 ----------
+let _custEditId = null;
+let _custEditName = null;
 
-function openCustomerModal(c) {
-  _custModalId = c?.id ?? null;
-  $("#cust-modal-title").textContent = c ? "編輯客戶" : "新增客戶";
+function openCustomerEdit(c) {
+  _custEditId = c?.id ?? null;
+  _custEditName = c?.name ?? null;
+  $("#cust-edit-title").textContent = c ? "編輯客戶" : "新增客戶";
+  $("#cust-delete-btn").hidden = !c;
   $("#cf-name").value    = c?.name    ?? "";
   $("#cf-tax-id").value  = c?.tax_id  ?? "";
   $("#cf-phone").value   = c?.phone   ?? "";
   $("#cf-email").value   = c?.email   ?? "";
   $("#cf-address").value = c?.address ?? "";
   $("#cf-note").value    = c?.note    ?? "";
-  $("#cust-modal").hidden = false;
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-customer-edit"));
   $("#cf-name").focus();
 }
 
-function closeCustomerModal() {
-  $("#cust-modal").hidden = true;
+function closeCustomerEdit() {
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-customers"));
+  renderCustomers();
 }
 
-async function submitCustomerModal(e) {
+async function submitCustomerEdit(e) {
   e.preventDefault();
   const fields = {
     name:    $("#cf-name").value.trim(),
@@ -414,15 +425,35 @@ async function submitCustomerModal(e) {
   };
   if (!fields.name) return;
   try {
-    if (_custModalId) {
-      await api.updateCustomer(_custModalId, fields);
+    if (_custEditId) {
+      await api.updateCustomer(_custEditId, fields);
     } else {
       await api.addCustomer(fields);
     }
-    closeCustomerModal();
-    renderCustomers();
+    closeCustomerEdit();
   } catch (e) {
     alert("儲存失敗：" + e.message);
+  }
+}
+
+async function handleDeleteCustomer(id, name) {
+  if (!confirm(`確定要刪除「${name}」嗎？\n（不會刪除歷史訂單紀錄，只會從客戶、開單頁下架）`)) return;
+  try {
+    await api.deactivateCustomer(id);
+    renderCustomers();
+  } catch (e) {
+    alert("刪除失敗：" + e.message);
+  }
+}
+
+async function handleDeleteCustomerFromEdit() {
+  if (!_custEditId) return;
+  if (!confirm(`確定要刪除「${_custEditName}」嗎？\n（不會刪除歷史訂單紀錄，只會從客戶、開單頁下架）`)) return;
+  try {
+    await api.deactivateCustomer(_custEditId);
+    closeCustomerEdit();
+  } catch (e) {
+    alert("刪除失敗：" + e.message);
   }
 }
 

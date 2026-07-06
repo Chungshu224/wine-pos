@@ -250,45 +250,47 @@ input[type="search"], input[type="number"], select {
   * { transition: none !important; }
 }
 
-/* ---------- Modal ---------- */
-#cust-modal[hidden] { display: none; }
-#cust-modal {
-  position: fixed; inset: 0; z-index: 200;
-  display: flex; align-items: center; justify-content: center;
-}
-.modal-backdrop {
-  position: absolute; inset: 0; background: rgba(0,0,0,.45);
-}
-.modal-box {
-  position: relative; z-index: 1;
-  background: var(--stone); border-radius: 6px;
+/* ---------- 客戶編輯頁 ---------- */
+.edit-card {
+  background: #fff; border-radius: 6px;
   padding: 1.8rem; width: min(560px, 94vw);
-  max-height: 90vh; overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
   border-top: 5px solid var(--cork);
 }
-.modal-title { font-size: 1.1rem; color: var(--wine); margin-bottom: 1.2rem; }
-.modal-form label {
+.edit-card-title { font-size: 1.1rem; color: var(--wine); margin-bottom: 1.2rem; }
+.edit-form label {
   display: flex; flex-direction: column; gap: .3rem;
   font-size: .85rem; color: var(--muted);
 }
-.modal-form input, .modal-form textarea {
+.edit-form input, .edit-form textarea {
   padding: .55rem .8rem; border: 1px solid var(--line);
   border-radius: 3px; font-size: .95rem; background: #fff; color: var(--ink);
 }
-.modal-form textarea { resize: vertical; }
+.edit-form textarea { resize: vertical; }
 .form-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: .8rem;
 }
 .form-full { margin-bottom: .8rem; }
 .form-full label { width: 100%; }
 .required { color: var(--warn); }
-.modal-actions {
-  display: flex; gap: .8rem; justify-content: flex-end; margin-top: 1.2rem;
+.edit-form-actions {
+  display: flex; gap: .8rem; justify-content: space-between; align-items: center; margin-top: 1.2rem;
 }
+.edit-form-actions-right { display: flex; gap: .8rem; }
 .btn-outline {
   background: none; border: 1px solid var(--line); color: var(--ink);
   padding: .55rem 1.2rem; border-radius: 3px; cursor: pointer; font-size: .95rem;
 }
 .btn-outline:hover { background: var(--line); }
-.modal-actions .btn-primary { width: auto; padding: .55rem 1.6rem; }
+.edit-form-actions .btn-primary { width: auto; padding: .55rem 1.6rem; }
+
+/* ---------- 客戶頁表格欄寬 ---------- */
+#cust-table { table-layout: fixed; }
+#cust-table th, #cust-table td { overflow-wrap: break-word; }
+#cust-table th:nth-child(1), #cust-table td:nth-child(1) { width: 10%; } /* 統一編號 */
+#cust-table th:nth-child(2), #cust-table td:nth-child(2) { width: 16%; } /* 姓名／名稱 */
+#cust-table th:nth-child(3), #cust-table td:nth-child(3) { width: 12%; } /* 電話 */
+#cust-table th:nth-child(4), #cust-table td:nth-child(4) { width: 18%; } /* Email */
+#cust-table th:nth-child(5), #cust-table td:nth-child(5) { width: 22%; } /* 地址 */
+#cust-table th:nth-child(6), #cust-table td:nth-child(6) { width: 14%; } /* 備註 */
+#cust-table th:nth-child(7), #cust-table td:nth-child(7) { width: 8%; white-space: nowrap; } /* 操作 */

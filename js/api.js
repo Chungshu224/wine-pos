@@ -106,6 +106,12 @@ export async function updateCustomer(id, fields) {
   if (error) throw error;
 }
 
+// 軟刪除：不會刪除歷史訂單紀錄，只是不再顯示於客戶列表、開單頁
+export async function deactivateCustomer(id) {
+  const { error } = await sb.from("customers").update({ is_active: false }).eq("id", id);
+  if (error) throw error;
+}
+
 // ---------- 開單（呼叫資料庫函式，FIFO 扣庫存防超賣） ----------
 export async function createOrder({ customerId, discount, payment, note, items }) {
   // items: [{ product_id, qty, unit_price }]

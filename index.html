@@ -126,12 +126,14 @@
       <table id="log-table" class="data-table"></table>
     </main>
 
-    <!-- 客戶編輯 Modal -->
-    <div id="cust-modal" hidden>
-      <div class="modal-backdrop" id="cust-modal-backdrop"></div>
-      <div class="modal-box">
-        <h3 id="cust-modal-title" class="modal-title">編輯客戶</h3>
-        <form id="cust-form" class="modal-form">
+    <!-- 客戶編輯頁 -->
+    <main id="page-customer-edit" class="page" hidden>
+      <div class="page-toolbar">
+        <button type="button" id="cust-edit-back" class="btn-outline">← 返回客戶列表</button>
+      </div>
+      <div class="edit-card">
+        <h3 id="cust-edit-title" class="edit-card-title">編輯客戶</h3>
+        <form id="cust-form" class="edit-form">
           <div class="form-grid">
             <label>姓名／名稱 <span class="required">*</span>
               <input id="cf-name" required placeholder="必填">
@@ -158,13 +160,16 @@
               <textarea id="cf-note" rows="4" placeholder="選填"></textarea>
             </label>
           </div>
-          <div class="modal-actions">
-            <button type="button" id="cust-modal-cancel" class="btn-outline">取消</button>
-            <button type="submit" class="btn-primary">儲存</button>
+          <div class="edit-form-actions">
+            <button type="button" id="cust-delete-btn" class="btn-link-danger" hidden>刪除此客戶</button>
+            <div class="edit-form-actions-right">
+              <button type="button" id="cust-edit-cancel" class="btn-outline">取消</button>
+              <button type="submit" class="btn-primary">儲存</button>
+            </div>
           </div>
         </form>
       </div>
-    </div>
+    </main>
 
   </div>
 
