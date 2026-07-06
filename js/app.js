@@ -225,23 +225,32 @@ async function renderStock() {
   const kw = $("#stock-search").value.trim();
   const rows = await api.getStock(kw);
   $("#stock-table").innerHTML = `
-    <tr><th>酒款</th><th>年份</th><th>容量</th><th>庫位</th><th>庫存</th><th>均價成本</th><th>定價</th><th></th></tr>
+    <tr><th>庫位</th><th>酒款</th><th>年份</th><th>容量</th><th>庫存</th><th>均價成本</th><th>定價</th><th></th></tr>
     ${rows
       .map(
         (r) => `
       <tr class="${r.stock_qty <= 2 ? "low-stock" : ""}">
+        <td>${esc(r.locations ?? "—")}</td>
         <td>${esc(r.name)}</td>
         <td>${r.vintage ?? "NV"}</td>
         <td>${r.volume_ml}ml</td>
-        <td>${esc(r.locations ?? "—")}</td>
         <td>${r.stock_qty}</td>
         <td>${r.avg_cost ? "$" + fmt(r.avg_cost) : "—"}</td>
         <td>$${fmt(r.list_price)}</td>
-        <td><button class="btn-link-danger" data-id="${r.product_id}" data-name="${esc(r.name)}">刪除</button></td>
+        <td class="row-actions">
+          <button class="btn-link-edit" data-id="${r.product_id}">編輯</button>
+          <button class="btn-link-danger" data-id="${r.product_id}" data-name="${esc(r.name)}">刪除</button>
+        </td>
       </tr>`
       )
       .join("")}`;
 
+  $$("#stock-table .btn-link-edit").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const r = rows.find((x) => x.product_id == btn.dataset.id);
+      handleEditProduct(r);
+    })
+  );
   $$("#stock-table .btn-link-danger").forEach((btn) =>
     btn.addEventListener("click", () => handleDeleteProduct(btn.dataset.id, btn.dataset.name))
   );
@@ -265,6 +274,23 @@ async function handleAddProduct() {
     renderStock();
   } catch (e) {
     alert("新增失敗：" + e.message);
+  }
+}
+
+async function handleEditProduct(r) {
+  const name = prompt("酒款名稱：", r.name);
+  if (name === null) return;
+  const vintageInput = prompt("年份（NV 酒可留空）：", r.vintage ?? "");
+  const vintage = vintageInput ? parseInt(vintageInput) || null : null;
+  const volumeInput = prompt("容量 ml：", r.volume_ml);
+  const volume_ml = parseInt(volumeInput) || 750;
+  const priceInput = prompt("定價：", r.list_price);
+  const list_price = parseFloat(priceInput) || 0;
+  try {
+    await api.updateProduct(r.product_id, { name, vintage, volume_ml, list_price });
+    renderStock();
+  } catch (e) {
+    alert("編輯失敗：" + e.message);
   }
 }
 

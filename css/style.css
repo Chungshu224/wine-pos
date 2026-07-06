@@ -168,7 +168,11 @@ input[type="search"], input[type="number"], select {
 }
 .data-table td { padding: .55rem .8rem; border-bottom: 1px solid var(--line); }
 .low-stock td { color: var(--warn); }
-.btn-link-danger {
+.btn-link-edit {
+  background: none; border: none; color: var(--cork); cursor: pointer;
+  font-size: .85rem; padding: .2rem .4rem; text-decoration: underline;
+}
+.row-actions { white-space: nowrap; }
   background: none; border: none; color: var(--warn); cursor: pointer;
   font-size: .85rem; padding: .2rem .4rem; text-decoration: underline;
 }
