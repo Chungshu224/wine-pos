@@ -106,6 +106,7 @@ input[type="search"], input[type="number"], select {
 .page-toolbar .btn-primary { width: auto; padding: .55rem 1.2rem; }
 
 /* ---------- 開單頁 ---------- */
+#page-pos[hidden] { display: none; }
 #page-pos { display: grid; grid-template-columns: 1fr 340px; gap: 1.2rem; }
 .pos-left input[type="search"] { width: 100%; margin-bottom: 1rem; }
 .product-grid {
