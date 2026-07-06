@@ -10,6 +10,7 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 // ---------- 購物車狀態 ----------
 let cart = []; // [{ product_id, name, vintage, qty, unit_price, stock }]
+let posProducts = []; // current POS product list (per-location rows)
 let selectedCustomer = null;
 let ordersPage = 0;
 const ORDERS_PER_PAGE = 30;
@@ -85,12 +86,13 @@ function switchTab(tab) {
 // ============================================
 async function renderPosProducts() {
   const kw = $("#pos-search").value.trim();
-  const rows = kw ? await api.getStock(kw) : await api.getPopularProducts();
-  $("#pos-products").innerHTML = rows
+  posProducts = await api.getStockLocations(kw);
+  const display = posProducts.filter((r) => r.stock_qty > 0);
+  $("#pos-products").innerHTML = display
     .map(
-      (r) => `
-    <div class="product-card ${r.stock_qty <= 0 ? "oos" : ""}" data-id="${r.product_id}">
-      <div class="p-name">${esc(r.name)}${r.locations ? `<span class="p-loc">${esc(r.locations)}</span>` : ""}</div>
+      (r, i) => `
+    <div class="product-card" data-idx="${i}">
+      <div class="p-name">${esc(r.name)}${r.location ? `<span class="p-loc">${esc(r.location)}</span>` : ""}</div>
       <div class="p-meta">${r.vintage ?? "NV"} · ${r.volume_ml}ml</div>
       <div class="p-row">
         <span class="p-price">$${fmt(r.list_price)}</span>
@@ -100,19 +102,23 @@ async function renderPosProducts() {
     )
     .join("");
 
-  $$("#pos-products .product-card:not(.oos)").forEach((card) =>
+  $$("#pos-products .product-card").forEach((card) =>
     card.addEventListener("click", () => {
-      const r = rows.find((x) => x.product_id == card.dataset.id);
-      addToCart(r);
+      const r = display[Number(card.dataset.idx)];
+      if (r) addToCart(r);
     })
   );
 }
 
 function addToCart(r) {
+  const totalStock = posProducts
+    .filter((x) => x.product_id === r.product_id)
+    .reduce((s, x) => s + x.stock_qty, 0);
   const existing = cart.find((c) => c.product_id === r.product_id);
   if (existing) {
-    if (existing.qty >= r.stock_qty) return alert("已達庫存上限");
+    if (existing.qty >= totalStock) return alert("已達庫存上限");
     existing.qty++;
+    existing.stock = totalStock;
   } else {
     cart.push({
       product_id: r.product_id,
@@ -120,7 +126,7 @@ function addToCart(r) {
       vintage: r.vintage,
       qty: 1,
       unit_price: Number(r.list_price),
-      stock: r.stock_qty,
+      stock: totalStock,
     });
   }
   renderCart();
