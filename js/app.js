@@ -90,7 +90,7 @@ async function renderPosProducts() {
     .map(
       (r) => `
     <div class="product-card ${r.stock_qty <= 0 ? "oos" : ""}" data-id="${r.product_id}">
-      <div class="p-name">${esc(r.name)}</div>
+      <div class="p-name">${esc(r.name)}${r.locations ? `<span class="p-loc">${esc(r.locations)}</span>` : ""}</div>
       <div class="p-meta">${r.vintage ?? "NV"} · ${r.volume_ml}ml</div>
       <div class="p-row">
         <span class="p-price">$${fmt(r.list_price)}</span>
