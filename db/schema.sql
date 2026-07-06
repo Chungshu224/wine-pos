@@ -91,7 +91,7 @@ CREATE TABLE purchase_batches (
 
 CREATE INDEX idx_batches_product ON purchase_batches (product_id, purchased_at);
 
--- 目前庫存 = 各批次 qty_left 加總，用 VIEW 查詢
+-- 庫存彙總（POS 搜尋用，同商品所有庫位加總）
 CREATE VIEW v_stock AS
 SELECT
   p.id AS product_id,
@@ -99,13 +99,28 @@ SELECT
   COALESCE(SUM(b.qty_left), 0) AS stock_qty,
   CASE WHEN COALESCE(SUM(b.qty_left),0) > 0
        THEN ROUND(SUM(b.unit_cost * b.qty_left) / SUM(b.qty_left), 2)
-       ELSE NULL END AS avg_cost,  -- 剩餘庫存的加權平均成本
+       ELSE NULL END AS avg_cost,
   STRING_AGG(DISTINCT b.location, ', ' ORDER BY b.location)
-    FILTER (WHERE b.qty_left > 0 AND b.location IS NOT NULL) AS locations  -- 庫位（可能分散在多個庫位）
+    FILTER (WHERE b.qty_left > 0 AND b.location IS NOT NULL) AS locations
 FROM products p
 LEFT JOIN purchase_batches b ON b.product_id = p.id AND b.qty_left > 0
 WHERE p.is_active
 GROUP BY p.id;
+
+-- 庫存明細（庫存管理頁用，每個庫位獨立一列）
+CREATE VIEW v_stock_locations AS
+SELECT
+  p.id AS product_id,
+  p.name, p.producer, p.vintage, p.volume_ml, p.list_price,
+  b.location,
+  COALESCE(SUM(b.qty_left), 0) AS stock_qty,
+  CASE WHEN COALESCE(SUM(b.qty_left), 0) > 0
+       THEN ROUND(SUM(b.unit_cost * b.qty_left) / SUM(b.qty_left), 2)
+       ELSE NULL END AS avg_cost
+FROM products p
+LEFT JOIN purchase_batches b ON b.product_id = p.id AND b.qty_left > 0
+WHERE p.is_active
+GROUP BY p.id, p.name, p.producer, p.vintage, p.volume_ml, p.list_price, b.location;
 
 -- ------------------------------------------------------------
 -- 5. 銷售訂單

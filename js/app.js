@@ -223,14 +223,14 @@ async function handleCheckout() {
 // ============================================
 async function renderStock() {
   const kw = $("#stock-search").value.trim();
-  const rows = await api.getStock(kw);
+  const rows = await api.getStockLocations(kw);
   $("#stock-table").innerHTML = `
     <tr><th>庫位</th><th>酒款</th><th>年份</th><th>容量</th><th>庫存</th><th>均價成本</th><th>定價</th><th></th></tr>
     ${rows
       .map(
         (r) => `
       <tr class="${r.stock_qty <= 2 ? "low-stock" : ""}">
-        <td>${esc(r.locations ?? "—")}</td>
+        <td>${esc(r.location ?? "—")}</td>
         <td>${esc(r.name)}</td>
         <td>${r.vintage ?? "NV"}</td>
         <td>${r.volume_ml}ml</td>

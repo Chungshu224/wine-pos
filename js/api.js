@@ -13,6 +13,19 @@ export async function getStock(keyword = "") {
   return data;
 }
 
+// ---------- 庫存（庫存管理頁：每庫位一列） ----------
+export async function getStockLocations(keyword = "") {
+  let q = sb
+    .from("v_stock_locations")
+    .select("*")
+    .order("location", { nullsFirst: false })
+    .order("name");
+  if (keyword) q = q.ilike("name", `%${keyword}%`);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
 // ---------- 品項 ----------
 export async function getProducts(keyword = "") {
   let q = sb.from("products").select("*").eq("is_active", true).order("name");
