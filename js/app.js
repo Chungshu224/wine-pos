@@ -240,7 +240,7 @@ async function renderStock() {
     <tr><th>庫位</th><th>酒款</th><th>年份</th><th>容量</th><th>庫存</th><th>均價成本</th><th>定價</th><th></th></tr>
     ${rows
       .map(
-        (r) => `
+        (r, i) => `
       <tr class="${r.stock_qty <= 2 ? "low-stock" : ""}">
         <td>${esc(r.location ?? "—")}</td>
         <td>${esc(r.name)}</td>
@@ -250,6 +250,7 @@ async function renderStock() {
         <td>${r.avg_cost ? "$" + fmt(r.avg_cost) : "—"}</td>
         <td>$${fmt(r.list_price)}</td>
         <td class="row-actions">
+          <button class="btn-link-purchase" data-idx="${i}">進貨</button>
           <button class="btn-link-edit" data-id="${r.product_id}">編輯</button>
           <button class="btn-link-danger" data-id="${r.product_id}" data-name="${esc(r.name)}">刪除</button>
         </td>
@@ -257,6 +258,9 @@ async function renderStock() {
       )
       .join("")}`;
 
+  $$("#stock-table .btn-link-purchase").forEach((btn) =>
+    btn.addEventListener("click", () => handleAddPurchase(rows[Number(btn.dataset.idx)]))
+  );
   $$("#stock-table .btn-link-edit").forEach((btn) =>
     btn.addEventListener("click", () => {
       const r = rows.find((x) => x.product_id == btn.dataset.id);
@@ -313,6 +317,34 @@ async function handleDeleteProduct(id, name) {
     renderStock();
   } catch (e) {
     alert("刪除失敗：" + e.message);
+  }
+}
+
+async function handleAddPurchase(r) {
+  const location = prompt("庫位：", r.location ?? "");
+  if (location === null) return;
+  const supplier = prompt("供應商（可空）：") || null;
+  const costInput = prompt("進貨單價：");
+  if (!costInput) return;
+  const unit_cost = parseFloat(costInput);
+  if (isNaN(unit_cost) || unit_cost < 0) return alert("請輸入有效單價");
+  const qtyInput = prompt("進貨數量：");
+  if (!qtyInput) return;
+  const qty_in = parseInt(qtyInput);
+  if (isNaN(qty_in) || qty_in <= 0) return alert("請輸入有效數量");
+  const note = prompt("備註（可空）：") || null;
+  try {
+    await api.addPurchase({
+      product_id: r.product_id,
+      supplier,
+      unit_cost,
+      qty_in,
+      location: location || null,
+      note,
+    });
+    renderStock();
+  } catch (e) {
+    alert("進貨失敗：" + e.message);
   }
 }
 
