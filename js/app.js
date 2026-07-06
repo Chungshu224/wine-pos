@@ -47,6 +47,7 @@ async function init() {
   $("#cust-form").addEventListener("submit", submitCustomerEdit);
 
   // 訂單頁
+  setDefaultOrderDateRange();
   $("#order-search").addEventListener("input", debounce(() => { ordersPage = 0; renderOrders(); }, 300));
   $("#order-status-filter").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
   $("#order-date-from").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
@@ -239,7 +240,7 @@ async function handleCheckout() {
     const orderId = await api.createOrder({
       customerId: selectedCustomer?.id ?? null,
       payment: $("#payment-method").value,
-      note: null,
+      note: $("#order-note").value.trim() || null,
       items: cart.map((c) => ({
         product_id: c.product_id,
         qty: c.qty,
@@ -251,6 +252,7 @@ async function handleCheckout() {
     cart = [];
     selectedCustomer = null;
     $("#customer-search").value = "";
+    $("#order-note").value = "";
     renderCart();
     renderPosProducts();
   } catch (e) {
@@ -516,6 +518,15 @@ function paymentStatusCell(r) {
   }
   return `<span class="pay-tag pay-pending">未收款</span><br>
     <button class="btn-confirm-pay" data-id="${r.id}">確認收款</button>`;
+}
+
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function setDefaultOrderDateRange() {
+  const now = new Date();
+  $("#order-date-from").value = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
+  $("#order-date-to").value = ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 }
 
 async function renderOrders() {
