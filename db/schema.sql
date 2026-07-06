@@ -34,6 +34,8 @@ CREATE TRIGGER on_auth_user_created
 CREATE TABLE customers (
   id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name        TEXT NOT NULL,
+  tax_id      TEXT,                     -- 統一編號
+  tax_title   TEXT,                     -- 發票抬頭（公司名稱）
   phone       TEXT,
   email       TEXT,
   address     TEXT,

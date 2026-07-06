@@ -359,16 +359,16 @@ async function renderCustomers() {
   const kw = $("#cust-search").value.trim();
   const rows = await api.getCustomers(kw);
   $("#cust-table").innerHTML = `
-    <tr><th>姓名／名稱</th><th>統一編號</th><th>電話</th><th>地址</th><th>備註</th><th></th></tr>
+    <tr><th>姓名／名稱</th><th>統一編號</th><th>抬頭</th><th>電話</th><th>地址</th><th></th></tr>
     ${rows
       .map(
         (c, i) => `
       <tr>
         <td>${esc(c.name)}</td>
         <td>${esc(c.tax_id ?? "")}</td>
+        <td>${esc(c.tax_title ?? "")}</td>
         <td>${esc(c.phone ?? "")}</td>
         <td>${esc(c.address ?? "")}</td>
-        <td>${esc(c.note ?? "")}</td>
         <td class="row-actions">
           <button class="btn-link-edit" data-idx="${i}">編輯</button>
           <button class="btn-link-danger" data-id="${c.id}" data-name="${esc(c.name)}">刪除</button>
@@ -397,12 +397,13 @@ function openCustomerEdit(c) {
   _custEditName = c?.name ?? null;
   $("#cust-edit-title").textContent = c ? "編輯客戶" : "新增客戶";
   $("#cust-delete-btn").hidden = !c;
-  $("#cf-name").value    = c?.name    ?? "";
-  $("#cf-tax-id").value  = c?.tax_id  ?? "";
-  $("#cf-phone").value   = c?.phone   ?? "";
-  $("#cf-email").value   = c?.email   ?? "";
-  $("#cf-address").value = c?.address ?? "";
-  $("#cf-note").value    = c?.note    ?? "";
+  $("#cf-name").value      = c?.name      ?? "";
+  $("#cf-tax-id").value    = c?.tax_id    ?? "";
+  $("#cf-tax-title").value = c?.tax_title ?? "";
+  $("#cf-phone").value     = c?.phone     ?? "";
+  $("#cf-email").value     = c?.email     ?? "";
+  $("#cf-address").value   = c?.address   ?? "";
+  $("#cf-note").value      = c?.note      ?? "";
   $$(".page").forEach((p) => (p.hidden = p.id !== "page-customer-edit"));
   $("#cf-name").focus();
 }
@@ -415,12 +416,13 @@ function closeCustomerEdit() {
 async function submitCustomerEdit(e) {
   e.preventDefault();
   const fields = {
-    name:    $("#cf-name").value.trim(),
-    tax_id:  $("#cf-tax-id").value.trim()  || null,
-    phone:   $("#cf-phone").value.trim()   || null,
-    email:   $("#cf-email").value.trim()   || null,
-    address: $("#cf-address").value.trim() || null,
-    note:    $("#cf-note").value.trim()    || null,
+    name:      $("#cf-name").value.trim(),
+    tax_id:    $("#cf-tax-id").value.trim()    || null,
+    tax_title: $("#cf-tax-title").value.trim() || null,
+    phone:     $("#cf-phone").value.trim()     || null,
+    email:     $("#cf-email").value.trim()     || null,
+    address:   $("#cf-address").value.trim()   || null,
+    note:      $("#cf-note").value.trim()      || null,
   };
   if (!fields.name) return;
   try {
