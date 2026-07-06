@@ -67,6 +67,7 @@ function showApp(user) {
   $("#app-view").hidden = false;
   $("#user-name").textContent = user.display_name;
   switchTab("pos");
+  checkPaymentReminders();
 }
 
 function switchTab(tab) {
@@ -75,7 +76,7 @@ function switchTab(tab) {
   if (tab === "pos") renderPosProducts();
   if (tab === "stock") renderStock();
   if (tab === "customers") renderCustomers();
-  if (tab === "orders") renderOrders();
+  if (tab === "orders") { renderOrders(); checkPaymentReminders(); }
   if (tab === "log") renderLog();
 }
 
@@ -189,6 +190,10 @@ async function renderCustomerPicker() {
 
 async function handleCheckout() {
   if (cart.length === 0) return;
+  if ($("#payment-method").value === "monthly" && !selectedCustomer) {
+    alert("月結付款需先選擇客戶");
+    return;
+  }
   const btn = $("#checkout-btn");
   btn.disabled = true;
   try {
@@ -305,7 +310,33 @@ async function handleAddCustomer() {
 // ============================================
 // 訂單頁
 // ============================================
-const PAYMENT_LABEL = { cash: "現金", card: "刷卡", transfer: "轉帳", other: "其他" };
+const PAYMENT_LABEL = { cash: "現金", card: "刷卡", transfer: "轉帳", monthly: "月結", other: "其他" };
+
+// ---------- 月結日期計算 ----------
+function monthlyDueDate(createdAt) {
+  const d = new Date(createdAt);
+  return new Date(d.getFullYear(), d.getMonth() + 2, 0); // 下個月最後一天
+}
+function monthlyReminderDate(createdAt) {
+  const due = monthlyDueDate(createdAt);
+  return new Date(due.getFullYear(), due.getMonth() + 1, 5); // 到期月的再下一個月5日
+}
+function paymentStatusCell(r) {
+  if (r.payment_method === "card") return `<span class="pay-tag pay-ok">刷卡✓</span>`;
+  if (r.paid_at) {
+    const d = new Date(r.paid_at).toLocaleDateString("zh-TW", { month: "2-digit", day: "2-digit" });
+    return `<span class="pay-tag pay-ok">已收 ${d}</span>`;
+  }
+  if (r.payment_method === "monthly") {
+    const due = monthlyDueDate(r.created_at);
+    const isOverdue = new Date() > due;
+    const dueStr = due.toLocaleDateString("zh-TW", { month: "2-digit", day: "2-digit" });
+    return `<span class="pay-tag ${isOverdue ? "pay-overdue" : "pay-monthly"}">月結 ${dueStr}${isOverdue ? " ⚠" : ""}</span><br>
+      <button class="btn-confirm-pay" data-id="${r.id}">確認收款</button>`;
+  }
+  return `<span class="pay-tag pay-pending">未收款</span><br>
+    <button class="btn-confirm-pay" data-id="${r.id}">確認收款</button>`;
+}
 
 async function renderOrders() {
   const kw = $("#order-search").value.trim();
@@ -319,7 +350,7 @@ async function renderOrders() {
   });
 
   $("#orders-table").innerHTML = `
-    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>備註</th><th></th></tr>
+    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>收款</th><th></th></tr>
     ${rows.map((r) => `
       <tr>
         <td>${new Date(r.created_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
@@ -329,10 +360,13 @@ async function renderOrders() {
         <td class="order-total">$${fmt(r.total)}</td>
         <td>${esc(r.customers?.name ?? "散客")}</td>
         <td>${r.order_items?.length ?? 0} 件</td>
-        <td class="log-detail">${esc(r.note ?? "")}</td>
+        <td>${paymentStatusCell(r)}</td>
         <td><button class="btn-link-print" data-id="${r.id}">列印</button></td>
       </tr>`).join("")}`;
 
+  $$("#orders-table .btn-confirm-pay").forEach((btn) =>
+    btn.addEventListener("click", () => confirmPaymentHandler(Number(btn.dataset.id)))
+  );
   $$("#orders-table .btn-link-print").forEach((btn) =>
     btn.addEventListener("click", () => printOrder(Number(btn.dataset.id)))
   );
@@ -348,6 +382,39 @@ async function renderOrders() {
     <button id="orders-next" ${ordersPage >= totalPages - 1 ? "disabled" : ""}>下一頁</button>`;
   $("#orders-prev").addEventListener("click", () => { ordersPage--; renderOrders(); });
   $("#orders-next").addEventListener("click", () => { ordersPage++; renderOrders(); });
+}
+
+async function confirmPaymentHandler(orderId) {
+  try {
+    await api.confirmPayment(orderId);
+    await renderOrders();
+    checkPaymentReminders();
+  } catch (e) {
+    alert("確認失敗：" + e.message);
+  }
+}
+
+async function checkPaymentReminders() {
+  let rows;
+  try { rows = await api.getUnpaidOrders(); }
+  catch { return; }
+
+  const today = new Date();
+  const reminderDue = rows.filter(
+    (r) => r.payment_method === "monthly" && today >= monthlyReminderDate(r.created_at)
+  );
+
+  const badge = $("#payment-badge");
+  if (rows.length > 0) { badge.textContent = rows.length; badge.hidden = false; }
+  else { badge.hidden = true; }
+
+  const bar = $("#notif-bar");
+  if (reminderDue.length > 0) {
+    bar.textContent = `⚠ 有 ${reminderDue.length} 筆月結訂單已到提醒日（每月5日），請至「訂單」頁確認是否收款`;
+    bar.hidden = false;
+  } else {
+    bar.hidden = true;
+  }
 }
 
 async function printOrder(orderId) {

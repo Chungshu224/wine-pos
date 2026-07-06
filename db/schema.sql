@@ -120,10 +120,11 @@ CREATE TABLE orders (
   discount      NUMERIC(12,2) NOT NULL DEFAULT 0, -- 整單折讓
   total         NUMERIC(12,2) NOT NULL DEFAULT 0,
   payment_method TEXT DEFAULT 'cash'
-                CHECK (payment_method IN ('cash','card','transfer','other')),
+                CHECK (payment_method IN ('cash','card','transfer','monthly','other')),
   note          TEXT,
   created_by    UUID NOT NULL REFERENCES profiles(id),  -- 誰開的單
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  paid_at       TIMESTAMPTZ,                            -- NULL=未收款, 有值=已確認收款
   voided_by     UUID REFERENCES profiles(id),
   voided_at     TIMESTAMPTZ
 );

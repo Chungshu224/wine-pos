@@ -113,6 +113,26 @@ export async function getOrderById(id) {
   return data;
 }
 
+export async function confirmPayment(orderId) {
+  const { error } = await sb
+    .from("orders")
+    .update({ paid_at: new Date().toISOString() })
+    .eq("id", orderId);
+  if (error) throw error;
+}
+
+export async function getUnpaidOrders() {
+  const { data, error } = await sb
+    .from("orders")
+    .select("id, order_no, created_at, payment_method, total, customers(name)")
+    .eq("status", "completed")
+    .is("paid_at", null)
+    .neq("payment_method", "card")
+    .order("created_at");
+  if (error) throw error;
+  return data ?? [];
+}
+
 // ---------- 操作紀錄 ----------
 export async function getAuditLog(limit = 100) {
   const { data, error } = await sb

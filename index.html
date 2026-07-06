@@ -34,7 +34,7 @@
         <button class="tab" data-tab="pos">開單</button>
         <button class="tab" data-tab="stock">庫存</button>
         <button class="tab" data-tab="customers">客戶</button>
-        <button class="tab" data-tab="orders">訂單</button>
+        <button class="tab" data-tab="orders">訂單<span id="payment-badge" class="tab-badge" hidden></span></button>
         <button class="tab" data-tab="log">紀錄</button>
       </nav>
       <div class="user-area">
@@ -42,6 +42,7 @@
         <button id="logout-btn" class="btn-ghost">登出</button>
       </div>
     </header>
+    <div id="notif-bar" hidden></div>
 
     <!-- 開單頁 -->
     <main id="page-pos" class="page">
@@ -67,6 +68,7 @@
             <option value="cash">現金</option>
             <option value="card">刷卡</option>
             <option value="transfer">轉帳</option>
+            <option value="monthly">月結</option>
             <option value="other">其他</option>
           </select>
           <button id="checkout-btn" class="btn-primary" disabled>結帳</button>
