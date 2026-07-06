@@ -84,6 +84,10 @@ function switchTab(tab) {
 // ============================================
 async function renderPosProducts() {
   const kw = $("#pos-search").value.trim();
+  if (!kw) {
+    $("#pos-products").innerHTML = `<p class="pos-hint">請輸入酒款名稱搜尋</p>`;
+    return;
+  }
   const rows = await api.getStock(kw);
   $("#pos-products").innerHTML = rows
     .map(

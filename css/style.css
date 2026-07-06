@@ -108,10 +108,12 @@ input[type="search"], input[type="number"], select {
 .p-price { color: var(--wine); font-weight: 700; }
 .p-stock { color: var(--muted); }
 
-.pos-cart {
-  background: #fff; border: 1px solid var(--line); border-radius: 4px;
-  padding: 1rem; align-self: start; position: sticky; top: 1rem;
+.pos-hint {
+  color: var(--muted); font-size: .95rem; padding: 2rem 0;
+  grid-column: 1 / -1; text-align: center;
 }
+
+.pos-cart {
 .pos-cart h2 { font-size: 1.05rem; margin-bottom: .8rem; color: var(--wine); }
 .customer-box { position: relative; margin-bottom: .8rem; }
 .customer-box input { width: 100%; }
