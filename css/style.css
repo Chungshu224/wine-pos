@@ -149,6 +149,7 @@ input[type="search"], input[type="number"], input[type="text"], select {
   padding: .6rem 0; border-bottom: 1px solid var(--line); font-size: .88rem;
   gap: .6rem;
 }
+.c-info { flex: 1; min-width: 0; }
 .c-vintage { color: var(--muted); font-size: .78rem; }
 .c-price-row { display: flex; align-items: center; gap: .5rem; margin-top: .3rem; }
 .c-list-price { color: var(--ink); font-size: .85rem; }
@@ -250,12 +251,45 @@ input[type="search"], input[type="number"], input[type="text"], select {
 }
 .pagination button:disabled { opacity: .4; cursor: not-allowed; }
 
+/* ---------- 表格橫向捲動 ---------- */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
 /* ---------- 手機版 ---------- */
 @media (max-width: 800px) {
+  html { -webkit-text-size-adjust: 100%; }
+  .page { padding: .8rem; }
+
   #page-pos { grid-template-columns: 1fr; }
   .pos-cart { position: static; }
-  header { flex-wrap: wrap; gap: .6rem; }
-  nav { order: 3; width: 100%; }
+  header { flex-wrap: wrap; gap: .6rem; padding: .5rem .8rem; }
+  nav {
+    order: 3; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .tab { padding: .5rem .7rem; font-size: .85rem; white-space: nowrap; flex-shrink: 0; }
+
+  /* 表單元件維持 16px 避免 iOS 自動放大 */
+  input, select, textarea, button { font-size: 16px; }
+
+  .page-toolbar { flex-wrap: wrap; }
+  .page-toolbar input,
+  .page-toolbar select,
+  .page-toolbar .btn-primary { flex: 1 1 100%; }
+  .toolbar-sep { flex: 1 1 100%; text-align: center; }
+
+  .stmt-mode { flex: 1 1 100%; }
+
+  #cust-table { min-width: 700px; }
+
+  .form-grid { grid-template-columns: 1fr; }
+  .edit-card, .dialog-box { max-height: 90vh; overflow-y: auto; padding: 1.2rem; }
+
+  .product-card { gap: .6rem; padding: .5rem .7rem; }
+  .p-meta { width: 74px; font-size: .74rem; }
+  .p-price { min-width: 50px; }
+  .p-stock { min-width: 44px; }
+
+  .cart-row { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
