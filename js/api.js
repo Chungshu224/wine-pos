@@ -113,11 +113,10 @@ export async function deactivateCustomer(id) {
 }
 
 // ---------- 開單（呼叫資料庫函式，FIFO 扣庫存防超賣） ----------
-export async function createOrder({ customerId, discount, payment, note, items }) {
-  // items: [{ product_id, qty, unit_price }]
+export async function createOrder({ customerId, payment, note, items }) {
+  // items: [{ product_id, qty, unit_price（實售單價）, list_price（牌價，未折扣）}]
   const { data, error } = await sb.rpc("create_order", {
     p_customer_id: customerId,
-    p_discount: discount || 0,
     p_payment: payment || "cash",
     p_note: note || null,
     p_items: items,
@@ -130,7 +129,7 @@ export async function createOrder({ customerId, discount, payment, note, items }
 export async function getOrders({ keyword = "", status = "", dateFrom = "", dateTo = "", limit = 30, offset = 0 } = {}) {
   let q = sb
     .from("orders")
-    .select("*, customers(name), order_items(id)", { count: "exact" })
+    .select("*, customers(name), order_items(id), paid_by_profile:profiles!orders_paid_by_fkey(display_name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -154,10 +153,11 @@ export async function getOrderById(id) {
   return data;
 }
 
-export async function confirmPayment(orderId) {
+export async function confirmPayment(orderId, { paidAt, paidMethod }) {
+  const { data: { user } } = await sb.auth.getUser();
   const { error } = await sb
     .from("orders")
-    .update({ paid_at: new Date().toISOString() })
+    .update({ paid_at: paidAt, paid_method: paidMethod, paid_by: user.id })
     .eq("id", orderId);
   if (error) throw error;
 }

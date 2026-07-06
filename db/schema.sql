@@ -145,8 +145,8 @@ CREATE TABLE orders (
   customer_id   BIGINT REFERENCES customers(id),  -- 可空 = 散客
   status        TEXT NOT NULL DEFAULT 'completed'
                 CHECK (status IN ('completed','void')),
-  subtotal      NUMERIC(12,2) NOT NULL DEFAULT 0,
-  discount      NUMERIC(12,2) NOT NULL DEFAULT 0, -- 整單折讓
+  subtotal      NUMERIC(12,2) NOT NULL DEFAULT 0,     -- 依牌價加總 (未折扣)
+  discount      NUMERIC(12,2) NOT NULL DEFAULT 0,     -- 各品項折讓加總
   total         NUMERIC(12,2) NOT NULL DEFAULT 0,
   payment_method TEXT DEFAULT 'cash'
                 CHECK (payment_method IN ('cash','card','transfer','monthly','other')),
@@ -154,6 +154,8 @@ CREATE TABLE orders (
   created_by    UUID NOT NULL REFERENCES profiles(id),  -- 誰開的單
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   paid_at       TIMESTAMPTZ,                            -- NULL=未收款, 有值=已確認收款
+  paid_method   TEXT CHECK (paid_method IN ('cash','transfer')),  -- 實際收款方式
+  paid_by       UUID REFERENCES profiles(id),           -- 誰確認收款
   voided_by     UUID REFERENCES profiles(id),
   voided_at     TIMESTAMPTZ
 );
@@ -252,10 +254,10 @@ CREATE TRIGGER trg_audit_customers
 -- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION create_order(
   p_customer_id BIGINT,
-  p_discount    NUMERIC,
   p_payment     TEXT,
   p_note        TEXT,
-  p_items       JSONB   -- [{"product_id":1,"qty":2,"unit_price":1500}, ...]
+  p_items       JSONB   -- [{"product_id":1,"qty":2,"unit_price":1600,"list_price":2000}, ...]
+                        -- unit_price = 實售單價 (該品項套用折扣後); list_price = 牌價 (未折扣)
 )
 RETURNS BIGINT AS $$
 DECLARE
@@ -265,8 +267,8 @@ DECLARE
   v_need      INTEGER;
   v_take      INTEGER;
   v_batch     RECORD;
-  v_cost_sum  NUMERIC := 0;
   v_subtotal  NUMERIC := 0;
+  v_total     NUMERIC := 0;
   v_line_cost NUMERIC;
 BEGIN
   -- 產生單號 S + 日期 + 流水
@@ -275,8 +277,8 @@ BEGIN
   INTO v_order_no
   FROM orders WHERE created_at::DATE = CURRENT_DATE;
 
-  INSERT INTO orders (order_no, customer_id, discount, payment_method, note, created_by)
-  VALUES (v_order_no, p_customer_id, COALESCE(p_discount,0), p_payment, p_note, auth.uid())
+  INSERT INTO orders (order_no, customer_id, payment_method, note, created_by)
+  VALUES (v_order_no, p_customer_id, p_payment, p_note, auth.uid())
   RETURNING id INTO v_order_id;
 
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
@@ -318,12 +320,14 @@ BEGIN
       ROUND(v_line_cost / (v_item->>'qty')::INTEGER, 2)
     );
 
-    v_subtotal := v_subtotal + (v_item->>'qty')::INTEGER * (v_item->>'unit_price')::NUMERIC;
+    v_subtotal := v_subtotal + (v_item->>'qty')::INTEGER * COALESCE((v_item->>'list_price')::NUMERIC, (v_item->>'unit_price')::NUMERIC);
+    v_total    := v_total    + (v_item->>'qty')::INTEGER * (v_item->>'unit_price')::NUMERIC;
   END LOOP;
 
   UPDATE orders
   SET subtotal = v_subtotal,
-      total = v_subtotal - COALESCE(p_discount,0)
+      discount = v_subtotal - v_total,
+      total = v_total
   WHERE id = v_order_id;
 
   RETURN v_order_id;

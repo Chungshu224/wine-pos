@@ -51,6 +51,9 @@ async function init() {
   $("#order-status-filter").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
   $("#order-date-from").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
   $("#order-date-to").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
+  $("#pay-modal-backdrop").addEventListener("click", closePayModal);
+  $("#pay-modal-cancel").addEventListener("click", closePayModal);
+  $("#pay-form").addEventListener("submit", submitPayModal);
 }
 
 async function handleLogin() {
@@ -114,6 +117,15 @@ async function renderPosProducts() {
   );
 }
 
+const DISCOUNT_RATE_OPTIONS = [
+  { value: 1,    label: "無折扣" },
+  { value: 0.8,  label: "八折" },
+  { value: 0.7,  label: "七折" },
+  { value: 0.65, label: "六五折" },
+  { value: 0.6,  label: "六折" },
+  { value: 0,    label: "免費" },
+];
+
 function addToCart(r) {
   const totalStock = posProducts
     .filter((x) => x.product_id === r.product_id)
@@ -129,11 +141,16 @@ function addToCart(r) {
       name: r.name,
       vintage: r.vintage,
       qty: 1,
-      unit_price: Number(r.list_price),
+      list_price: Number(r.list_price), // 牌價，不可更動
+      rate: 1,                          // 該品項套用的折扣
       stock: totalStock,
     });
   }
   renderCart();
+}
+
+function finalPrice(c) {
+  return Math.round(c.list_price * c.rate);
 }
 
 function renderCart() {
@@ -143,7 +160,15 @@ function renderCart() {
     <div class="cart-row">
       <div class="c-info">
         <div>${esc(c.name)} <span class="c-vintage">${c.vintage ?? "NV"}</span></div>
-        <input type="number" class="c-price" data-i="${i}" value="${c.unit_price}" min="0" step="1">
+        <div class="c-price-row">
+          <span class="c-list-price ${c.rate < 1 ? "discounted" : ""}">$${fmt(c.list_price)}</span>
+          <select class="c-rate" data-i="${i}">
+            ${DISCOUNT_RATE_OPTIONS.map(
+              (o) => `<option value="${o.value}" ${c.rate === o.value ? "selected" : ""}>${o.label}</option>`
+            ).join("")}
+          </select>
+          ${c.rate < 1 ? `<span class="c-final-price">$${fmt(finalPrice(c))}</span>` : ""}
+        </div>
       </div>
       <div class="c-qty">
         <button data-i="${i}" data-d="-1">−</button>
@@ -163,16 +188,16 @@ function renderCart() {
       renderCart();
     })
   );
-  $$("#cart-items .c-price").forEach((inp) =>
-    inp.addEventListener("change", () => {
-      cart[inp.dataset.i].unit_price = Number(inp.value) || 0;
+  $$("#cart-items .c-rate").forEach((sel) =>
+    sel.addEventListener("change", () => {
+      cart[sel.dataset.i].rate = Number(sel.value);
       renderCart();
     })
   );
 
-  const subtotal = cart.reduce((s, c) => s + c.qty * c.unit_price, 0);
-  const rate = Number($("#discount-rate").value);
-  const discount = Math.round(subtotal * (1 - rate));
+  const subtotal = cart.reduce((s, c) => s + c.qty * c.list_price, 0);
+  const total = cart.reduce((s, c) => s + c.qty * finalPrice(c), 0);
+  const discount = subtotal - total;
   $("#cart-subtotal").textContent = fmt(subtotal);
   const discLine = $("#cart-discount-line");
   if (discount > 0) {
@@ -181,7 +206,7 @@ function renderCart() {
   } else {
     discLine.style.display = "none";
   }
-  $("#cart-total").textContent = fmt(subtotal - discount);
+  $("#cart-total").textContent = fmt(total);
   $("#checkout-btn").disabled = cart.length === 0;
 }
 
@@ -211,24 +236,25 @@ async function handleCheckout() {
   const btn = $("#checkout-btn");
   btn.disabled = true;
   try {
-    const subtotal = cart.reduce((s, c) => s + c.qty * c.unit_price, 0);
-    const rate = Number($("#discount-rate").value);
     const orderId = await api.createOrder({
       customerId: selectedCustomer?.id ?? null,
-      discount: Math.round(subtotal * (1 - rate)),
       payment: $("#payment-method").value,
       note: null,
-      items: cart.map((c) => ({ product_id: c.product_id, qty: c.qty, unit_price: c.unit_price })),
+      items: cart.map((c) => ({
+        product_id: c.product_id,
+        qty: c.qty,
+        unit_price: finalPrice(c),
+        list_price: c.list_price,
+      })),
     });
-    alert(`結帳完成，訂單 #${orderId}`);
+    alert(`出單完成，訂單 #${orderId}\n（尚未收款，請至「訂單」頁確認收款）`);
     cart = [];
     selectedCustomer = null;
     $("#customer-search").value = "";
-    $("#discount-rate").value = "1";
     renderCart();
     renderPosProducts();
   } catch (e) {
-    alert("結帳失敗：" + e.message);
+    alert("出單失敗：" + e.message);
   } finally {
     btn.disabled = false;
   }
@@ -396,7 +422,7 @@ function openCustomerEdit(c) {
   _custEditId = c?.id ?? null;
   _custEditName = c?.name ?? null;
   $("#cust-edit-title").textContent = c ? "編輯客戶" : "新增客戶";
-  $("#cust-delete-btn").hidden = !c;
+  $("#cust-delete-btn").style.visibility = c ? "visible" : "hidden";
   $("#cf-name").value      = c?.name      ?? "";
   $("#cf-tax-id").value    = c?.tax_id    ?? "";
   $("#cf-tax-title").value = c?.tax_title ?? "";
@@ -462,6 +488,7 @@ async function handleDeleteCustomerFromEdit() {
 // 訂單頁
 // ============================================
 const PAYMENT_LABEL = { cash: "現金", card: "刷卡", transfer: "轉帳", monthly: "月結", other: "其他" };
+const PAID_METHOD_LABEL = { cash: "現金", transfer: "轉帳" };
 
 // ---------- 月結日期計算 ----------
 function monthlyDueDate(createdAt) {
@@ -475,8 +502,10 @@ function monthlyReminderDate(createdAt) {
 function paymentStatusCell(r) {
   if (r.payment_method === "card") return `<span class="pay-tag pay-ok">刷卡✓</span>`;
   if (r.paid_at) {
-    const d = new Date(r.paid_at).toLocaleDateString("zh-TW", { month: "2-digit", day: "2-digit" });
-    return `<span class="pay-tag pay-ok">已收 ${d}</span>`;
+    const d = new Date(r.paid_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const method = PAID_METHOD_LABEL[r.paid_method];
+    const who = r.paid_by_profile?.display_name;
+    return `<span class="pay-tag pay-ok">已收 ${d}${method ? "・" + method : ""}${who ? "・" + esc(who) : ""}</span>`;
   }
   if (r.payment_method === "monthly") {
     const due = monthlyDueDate(r.created_at);
@@ -516,7 +545,7 @@ async function renderOrders() {
       </tr>`).join("")}`;
 
   $$("#orders-table .btn-confirm-pay").forEach((btn) =>
-    btn.addEventListener("click", () => confirmPaymentHandler(Number(btn.dataset.id)))
+    btn.addEventListener("click", () => openPayModal(Number(btn.dataset.id)))
   );
   $$("#orders-table .btn-link-print").forEach((btn) =>
     btn.addEventListener("click", () => printOrder(Number(btn.dataset.id)))
@@ -535,9 +564,39 @@ async function renderOrders() {
   $("#orders-next").addEventListener("click", () => { ordersPage++; renderOrders(); });
 }
 
-async function confirmPaymentHandler(orderId) {
+// ---------- 收款確認 Dialog ----------
+let _payOrderId = null;
+
+function toLocalDatetimeInputValue(date) {
+  const tzOffsetMs = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+}
+
+function openPayModal(orderId) {
+  _payOrderId = orderId;
+  $("#pf-method").value = "cash";
+  $("#pf-time").value = toLocalDatetimeInputValue(new Date());
+  $("#pf-confirmer").value = $("#user-name").textContent;
+  $("#pay-modal").hidden = false;
+}
+
+function closePayModal() {
+  $("#pay-modal").hidden = true;
+  _payOrderId = null;
+}
+
+async function submitPayModal(e) {
+  e.preventDefault();
+  if (!_payOrderId) return;
+  const paidMethod = $("#pf-method").value;
+  const timeVal = $("#pf-time").value;
+  if (!timeVal) return;
   try {
-    await api.confirmPayment(orderId);
+    await api.confirmPayment(_payOrderId, {
+      paidAt: new Date(timeVal).toISOString(),
+      paidMethod,
+    });
+    closePayModal();
     await renderOrders();
     checkPaymentReminders();
   } catch (e) {
@@ -692,6 +751,3 @@ function debounce(fn, ms) {
     t = setTimeout(() => fn(...a), ms);
   };
 }
-
-// 折扣選單變動即時更新總計
-$("#discount-rate").addEventListener("change", renderCart);

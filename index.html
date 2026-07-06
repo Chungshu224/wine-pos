@@ -59,17 +59,6 @@
         <div id="cart-items"></div>
         <div class="cart-footer">
           <div class="cart-line"><span>小計</span><span>$<span id="cart-subtotal">0</span></span></div>
-          <div class="cart-line">
-            <span>折扣</span>
-            <select id="discount-rate">
-              <option value="1">無折扣</option>
-              <option value="0.8">八折</option>
-              <option value="0.7">七折</option>
-              <option value="0.65">六五折</option>
-              <option value="0.6">六折</option>
-              <option value="0">免費</option>
-            </select>
-          </div>
           <div id="cart-discount-line" class="cart-line" style="display:none">
             <span>折扣金額</span><span style="color:var(--ok)">-$<span id="cart-discount-amt">0</span></span>
           </div>
@@ -81,7 +70,7 @@
             <option value="monthly">月結</option>
             <option value="other">其他</option>
           </select>
-          <button id="checkout-btn" class="btn-primary" disabled>結帳</button>
+          <button id="checkout-btn" class="btn-primary" disabled>出單</button>
         </div>
       </aside>
     </main>
@@ -166,7 +155,7 @@
             </label>
           </div>
           <div class="edit-form-actions">
-            <button type="button" id="cust-delete-btn" class="btn-link-danger" hidden>刪除此客戶</button>
+            <button type="button" id="cust-delete-btn" class="btn-link-danger" style="visibility:hidden">刪除此客戶</button>
             <div class="edit-form-actions-right">
               <button type="button" id="cust-edit-cancel" class="btn-outline">取消</button>
               <button type="submit" class="btn-primary">儲存</button>
@@ -175,6 +164,38 @@
         </form>
       </div>
     </main>
+
+    <!-- 收款確認 Modal -->
+    <div id="pay-modal" hidden>
+      <div class="dialog-backdrop" id="pay-modal-backdrop"></div>
+      <div class="dialog-box">
+        <h3 class="dialog-title">確認收款</h3>
+        <form id="pay-form" class="edit-form">
+          <div class="form-full">
+            <label>付款方式
+              <select id="pf-method" required>
+                <option value="cash">現金</option>
+                <option value="transfer">轉帳</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>收款時間
+              <input type="datetime-local" id="pf-time" required>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>確認人
+              <input id="pf-confirmer" disabled>
+            </label>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" id="pay-modal-cancel" class="btn-outline">取消</button>
+            <button type="submit" class="btn-primary">確認收款</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
   </div>
 
