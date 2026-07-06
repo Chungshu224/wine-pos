@@ -86,14 +86,21 @@ export async function createOrder({ customerId, discount, payment, note, items }
 }
 
 // ---------- 訂單查詢 ----------
-export async function getOrders(limit = 50) {
-  const { data, error } = await sb
+export async function getOrders({ keyword = "", status = "", dateFrom = "", dateTo = "", limit = 30, offset = 0 } = {}) {
+  let q = sb
     .from("orders")
-    .select("*, customers(name), order_items(*, products(name, vintage, volume_ml))")
+    .select("*, customers(name), order_items(id)", { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
+
+  if (status) q = q.eq("status", status);
+  if (keyword) q = q.ilike("order_no", `%${keyword}%`);
+  if (dateFrom) q = q.gte("created_at", dateFrom);
+  if (dateTo) q = q.lte("created_at", dateTo + "T23:59:59");
+
+  const { data, error, count } = await q;
   if (error) throw error;
-  return data;
+  return { data, count };
 }
 
 // ---------- 操作紀錄 ----------

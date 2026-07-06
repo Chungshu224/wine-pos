@@ -11,6 +11,8 @@ const $$ = (sel) => document.querySelectorAll(sel);
 // ---------- 購物車狀態 ----------
 let cart = []; // [{ product_id, name, vintage, qty, unit_price, stock }]
 let selectedCustomer = null;
+let ordersPage = 0;
+const ORDERS_PER_PAGE = 30;
 
 // ---------- 初始化 ----------
 init();
@@ -38,6 +40,12 @@ async function init() {
   // 客戶頁
   $("#cust-search").addEventListener("input", debounce(renderCustomers, 300));
   $("#add-customer-btn").addEventListener("click", handleAddCustomer);
+
+  // 訂單頁
+  $("#order-search").addEventListener("input", debounce(() => { ordersPage = 0; renderOrders(); }, 300));
+  $("#order-status-filter").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
+  $("#order-date-from").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
+  $("#order-date-to").addEventListener("change", () => { ordersPage = 0; renderOrders(); });
 }
 
 async function handleLogin() {
@@ -67,6 +75,7 @@ function switchTab(tab) {
   if (tab === "pos") renderPosProducts();
   if (tab === "stock") renderStock();
   if (tab === "customers") renderCustomers();
+  if (tab === "orders") renderOrders();
   if (tab === "log") renderLog();
 }
 
@@ -287,6 +296,50 @@ async function handleAddCustomer() {
   const phone = prompt("電話（可空）：") || null;
   await api.addCustomer({ name, phone });
   renderCustomers();
+}
+
+// ============================================
+// 訂單頁
+// ============================================
+const PAYMENT_LABEL = { cash: "現金", card: "刷卡", transfer: "轉帳", other: "其他" };
+
+async function renderOrders() {
+  const kw = $("#order-search").value.trim();
+  const status = $("#order-status-filter").value;
+  const dateFrom = $("#order-date-from").value;
+  const dateTo = $("#order-date-to").value;
+
+  const { data: rows, count } = await api.getOrders({
+    keyword: kw, status, dateFrom, dateTo,
+    limit: ORDERS_PER_PAGE, offset: ordersPage * ORDERS_PER_PAGE,
+  });
+
+  $("#orders-table").innerHTML = `
+    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>備註</th></tr>
+    ${rows.map((r) => `
+      <tr>
+        <td>${new Date(r.created_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+        <td><span class="order-no">${esc(r.order_no)}</span></td>
+        <td><span class="status-chip ${r.status}">${r.status === "completed" ? "已完成" : "已作廢"}</span></td>
+        <td>${PAYMENT_LABEL[r.payment_method] ?? r.payment_method}</td>
+        <td class="order-total">$${fmt(r.total)}</td>
+        <td>${esc(r.customers?.name ?? "散客")}</td>
+        <td>${r.order_items?.length ?? 0} 件</td>
+        <td class="log-detail">${esc(r.note ?? "")}</td>
+      </tr>`).join("")}`;
+
+  const totalPages = Math.ceil(count / ORDERS_PER_PAGE);
+  const pg = $("#orders-pagination");
+  if (totalPages <= 1) {
+    pg.innerHTML = "";
+    return;
+  }
+  pg.innerHTML = `
+    <button id="orders-prev" ${ordersPage === 0 ? "disabled" : ""}>上一頁</button>
+    <span>${ordersPage + 1} / ${totalPages}</span>
+    <button id="orders-next" ${ordersPage >= totalPages - 1 ? "disabled" : ""}>下一頁</button>`;
+  $("#orders-prev").addEventListener("click", () => { ordersPage--; renderOrders(); });
+  $("#orders-next").addEventListener("click", () => { ordersPage++; renderOrders(); });
 }
 
 // ============================================

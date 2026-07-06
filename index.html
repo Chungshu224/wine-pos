@@ -34,6 +34,7 @@
         <button class="tab" data-tab="pos">開單</button>
         <button class="tab" data-tab="stock">庫存</button>
         <button class="tab" data-tab="customers">客戶</button>
+        <button class="tab" data-tab="orders">訂單</button>
         <button class="tab" data-tab="log">紀錄</button>
       </nav>
       <div class="user-area">
@@ -89,6 +90,23 @@
         <button id="add-customer-btn" class="btn-primary">新增客戶</button>
       </div>
       <table id="cust-table" class="data-table"></table>
+    </main>
+
+    <!-- 訂單頁 -->
+    <main id="page-orders" class="page" hidden>
+      <div class="page-toolbar orders-toolbar">
+        <input type="search" id="order-search" placeholder="搜尋單號…">
+        <select id="order-status-filter">
+          <option value="">全部狀態</option>
+          <option value="completed">已完成</option>
+          <option value="void">已作廢</option>
+        </select>
+        <input type="date" id="order-date-from">
+        <span class="toolbar-sep">—</span>
+        <input type="date" id="order-date-to">
+      </div>
+      <table id="orders-table" class="data-table"></table>
+      <div id="orders-pagination" class="pagination"></div>
     </main>
 
     <!-- 操作紀錄頁 -->

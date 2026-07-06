@@ -156,6 +156,34 @@ input[type="search"], input[type="number"], select {
 }
 .log-detail { color: var(--muted); }
 
+/* ---------- 訂單頁 ---------- */
+.orders-toolbar input[type="date"] {
+  padding: .55rem .8rem; border: 1px solid var(--line);
+  border-radius: 3px; font-size: .95rem; background: #fff;
+}
+.toolbar-sep { color: var(--muted); align-self: center; }
+.order-no {
+  font-family: monospace; font-size: .82rem;
+  background: var(--stone); padding: .15rem .45rem; border-radius: 3px;
+  white-space: nowrap;
+}
+.status-chip {
+  display: inline-block; font-size: .78rem; padding: .15rem .55rem;
+  border-radius: 10px; font-weight: 500; white-space: nowrap;
+}
+.status-chip.completed { background: #d4edda; color: var(--ok); }
+.status-chip.void { background: #f8d7da; color: var(--warn); }
+.order-total { font-weight: 500; }
+.pagination {
+  display: flex; align-items: center; gap: .8rem;
+  margin-top: 1rem; font-size: .88rem; justify-content: center;
+}
+.pagination button {
+  padding: .3rem .9rem; border: 1px solid var(--line);
+  border-radius: 3px; background: #fff; cursor: pointer;
+}
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
 /* ---------- 手機版 ---------- */
 @media (max-width: 800px) {
   #page-pos { grid-template-columns: 1fr; }
