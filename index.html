@@ -86,6 +86,168 @@
       <div class="table-scroll"><table id="stock-table" class="data-table"></table></div>
     </main>
 
+    <!-- 新增酒款頁 -->
+    <main id="page-product-add" class="page" hidden>
+      <div class="page-toolbar">
+        <button type="button" id="pa-back" class="btn-outline">← 返回庫存列表</button>
+      </div>
+      <div class="edit-card">
+        <h3 class="edit-card-title">新增酒款</h3>
+        <form id="product-add-form" class="edit-form">
+          <div class="form-full">
+            <label>酒款名稱 <span class="required">*</span>
+              <input id="pa-name" required placeholder="必填">
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>酒莊
+              <input id="pa-producer" placeholder="選填">
+            </label>
+            <label>類型
+              <select id="pa-type">
+                <option value="red">紅酒</option>
+                <option value="white">白酒</option>
+                <option value="rose">粉紅酒</option>
+                <option value="sparkling">氣泡酒</option>
+                <option value="sweet">甜酒</option>
+                <option value="fortified">加烈酒</option>
+                <option value="spirits">烈酒</option>
+                <option value="other">其他</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>年份
+              <input id="pa-vintage" type="number" placeholder="NV 酒可留空">
+            </label>
+            <label>容量 (ml) <span class="required">*</span>
+              <input id="pa-volume" type="number" value="750" required>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>定價 <span class="required">*</span>
+              <input id="pa-list-price" type="number" step="1" required>
+            </label>
+          </div>
+          <p class="hint-msg">初始庫存（可空，之後也可以用「進貨」功能新增）</p>
+          <div class="form-grid">
+            <label>庫位
+              <input id="pa-location" placeholder="選填">
+            </label>
+            <label>進貨單價
+              <input id="pa-cost" type="number" step="0.01" placeholder="選填">
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>進貨數量
+              <input id="pa-qty" type="number" min="1" placeholder="選填">
+            </label>
+            <label>進貨日期
+              <input type="date" id="pa-date">
+            </label>
+          </div>
+          <div class="edit-form-actions">
+            <div></div>
+            <div class="edit-form-actions-right">
+              <button type="button" id="pa-cancel" class="btn-outline">取消</button>
+              <button type="submit" class="btn-primary">新增</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- 編輯酒款頁 -->
+    <main id="page-product-edit" class="page" hidden>
+      <div class="page-toolbar">
+        <button type="button" id="pe-back" class="btn-outline">← 返回庫存列表</button>
+      </div>
+      <div class="edit-card">
+        <h3 class="edit-card-title">編輯酒款</h3>
+        <form id="product-form" class="edit-form">
+          <div class="form-grid">
+            <label>庫位
+              <input id="pe-location" placeholder="選填">
+            </label>
+            <label>年份
+              <input id="pe-vintage" type="number" placeholder="NV 酒可留空">
+            </label>
+          </div>
+          <div class="form-full">
+            <label>酒款名稱 <span class="required">*</span>
+              <input id="pe-name" required>
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>容量 (ml) <span class="required">*</span>
+              <input id="pe-volume" type="number" required>
+            </label>
+            <label>定價 <span class="required">*</span>
+              <input id="pe-list-price" type="number" step="1" required>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>均價成本
+              <input id="pe-avg-cost" type="number" step="0.01" placeholder="尚無庫存，無法編輯">
+            </label>
+          </div>
+          <div class="edit-form-actions">
+            <div></div>
+            <div class="edit-form-actions-right">
+              <button type="button" id="pe-cancel" class="btn-outline">取消</button>
+              <button type="submit" class="btn-primary">儲存</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- 進貨頁 -->
+    <main id="page-purchase" class="page" hidden>
+      <div class="page-toolbar">
+        <button type="button" id="pc-back" class="btn-outline">← 返回庫存列表</button>
+      </div>
+      <div class="edit-card">
+        <h3 class="edit-card-title">進貨</h3>
+        <p id="purchase-page-product" class="hint-msg"></p>
+        <form id="purchase-form" class="edit-form">
+          <div class="form-grid">
+            <label>庫位
+              <input id="pc-location" placeholder="選填">
+            </label>
+            <label>供應商
+              <input id="pc-supplier" placeholder="選填">
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>進貨單價 <span class="required">*</span>
+              <input id="pc-cost" type="number" step="0.01" required>
+            </label>
+            <label>進貨數量 <span class="required">*</span>
+              <input id="pc-qty" type="number" min="1" required>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>進貨日期 <span class="required">*</span>
+              <input type="date" id="pc-date" required>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>備註
+              <input id="pc-note" placeholder="選填">
+            </label>
+          </div>
+          <div class="edit-form-actions">
+            <div></div>
+            <div class="edit-form-actions-right">
+              <button type="button" id="pc-cancel" class="btn-outline">取消</button>
+              <button type="submit" class="btn-primary">確認進貨</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+
     <!-- 客戶頁 -->
     <main id="page-customers" class="page" hidden>
       <div class="page-toolbar">
@@ -211,136 +373,6 @@
           <div class="dialog-actions">
             <button type="button" id="pay-modal-cancel" class="btn-outline">取消</button>
             <button type="submit" class="btn-primary">確認收款</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 新增酒款 Modal -->
-    <div id="product-add-modal" hidden>
-      <div class="dialog-backdrop" id="product-add-modal-backdrop"></div>
-      <div class="dialog-box">
-        <h3 class="dialog-title">新增酒款</h3>
-        <form id="product-add-form" class="edit-form">
-          <div class="form-full">
-            <label>酒款名稱 <span class="required">*</span>
-              <input id="pa-name" required>
-            </label>
-          </div>
-          <div class="form-grid">
-            <label>酒莊
-              <input id="pa-producer" placeholder="選填">
-            </label>
-            <label>類型
-              <select id="pa-type">
-                <option value="red">紅酒</option>
-                <option value="white">白酒</option>
-                <option value="rose">粉紅酒</option>
-                <option value="sparkling">氣泡酒</option>
-                <option value="sweet">甜酒</option>
-                <option value="fortified">加烈酒</option>
-                <option value="spirits">烈酒</option>
-                <option value="other">其他</option>
-              </select>
-            </label>
-          </div>
-          <div class="form-grid">
-            <label>年份
-              <input id="pa-vintage" type="number" placeholder="NV 酒可留空">
-            </label>
-            <label>容量 (ml) <span class="required">*</span>
-              <input id="pa-volume" type="number" value="750" required>
-            </label>
-          </div>
-          <div class="form-full">
-            <label>定價 <span class="required">*</span>
-              <input id="pa-list-price" type="number" step="1" required>
-            </label>
-          </div>
-          <div class="dialog-actions">
-            <button type="button" id="product-add-modal-cancel" class="btn-outline">取消</button>
-            <button type="submit" class="btn-primary">新增</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 編輯酒款 Modal -->
-    <div id="product-modal" hidden>
-      <div class="dialog-backdrop" id="product-modal-backdrop"></div>
-      <div class="dialog-box">
-        <h3 class="dialog-title">編輯酒款</h3>
-        <form id="product-form" class="edit-form">
-          <div class="form-grid">
-            <label>庫位
-              <input id="pe-location" placeholder="選填">
-            </label>
-            <label>年份
-              <input id="pe-vintage" type="number" placeholder="NV 酒可留空">
-            </label>
-          </div>
-          <div class="form-full">
-            <label>酒款名稱 <span class="required">*</span>
-              <input id="pe-name" required>
-            </label>
-          </div>
-          <div class="form-grid">
-            <label>容量 (ml) <span class="required">*</span>
-              <input id="pe-volume" type="number" required>
-            </label>
-            <label>定價 <span class="required">*</span>
-              <input id="pe-list-price" type="number" step="1" required>
-            </label>
-          </div>
-          <div class="form-full">
-            <label>均價成本
-              <input id="pe-avg-cost" type="number" step="0.01" placeholder="尚無庫存，無法編輯">
-            </label>
-          </div>
-          <div class="dialog-actions">
-            <button type="button" id="product-modal-cancel" class="btn-outline">取消</button>
-            <button type="submit" class="btn-primary">儲存</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 進貨 Modal -->
-    <div id="purchase-modal" hidden>
-      <div class="dialog-backdrop" id="purchase-modal-backdrop"></div>
-      <div class="dialog-box">
-        <h3 class="dialog-title">進貨</h3>
-        <p id="purchase-modal-product" class="hint-msg"></p>
-        <form id="purchase-form" class="edit-form">
-          <div class="form-grid">
-            <label>庫位
-              <input id="pc-location" placeholder="選填">
-            </label>
-            <label>供應商
-              <input id="pc-supplier" placeholder="選填">
-            </label>
-          </div>
-          <div class="form-grid">
-            <label>進貨單價 <span class="required">*</span>
-              <input id="pc-cost" type="number" step="0.01" required>
-            </label>
-            <label>進貨數量 <span class="required">*</span>
-              <input id="pc-qty" type="number" min="1" required>
-            </label>
-          </div>
-          <div class="form-full">
-            <label>進貨日期 <span class="required">*</span>
-              <input type="date" id="pc-date" required>
-            </label>
-          </div>
-          <div class="form-full">
-            <label>備註
-              <input id="pc-note" placeholder="選填">
-            </label>
-          </div>
-          <div class="dialog-actions">
-            <button type="button" id="purchase-modal-cancel" class="btn-outline">取消</button>
-            <button type="submit" class="btn-primary">確認進貨</button>
           </div>
         </form>
       </div>

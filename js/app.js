@@ -36,15 +36,15 @@ async function init() {
 
   // 庫存頁
   $("#stock-search").addEventListener("input", debounce(renderStock, 300));
-  $("#add-product-btn").addEventListener("click", openProductAddModal);
-  $("#product-add-modal-backdrop").addEventListener("click", closeProductAddModal);
-  $("#product-add-modal-cancel").addEventListener("click", closeProductAddModal);
+  $("#add-product-btn").addEventListener("click", openProductAddPage);
+  $("#pa-back").addEventListener("click", closeProductAddPage);
+  $("#pa-cancel").addEventListener("click", closeProductAddPage);
   $("#product-add-form").addEventListener("submit", submitProductAdd);
-  $("#product-modal-backdrop").addEventListener("click", closeProductEdit);
-  $("#product-modal-cancel").addEventListener("click", closeProductEdit);
+  $("#pe-back").addEventListener("click", closeProductEdit);
+  $("#pe-cancel").addEventListener("click", closeProductEdit);
   $("#product-form").addEventListener("submit", submitProductEdit);
-  $("#purchase-modal-backdrop").addEventListener("click", closePurchaseModal);
-  $("#purchase-modal-cancel").addEventListener("click", closePurchaseModal);
+  $("#pc-back").addEventListener("click", closePurchasePage);
+  $("#pc-cancel").addEventListener("click", closePurchasePage);
   $("#purchase-form").addEventListener("submit", submitPurchaseModal);
 
   // 客戶頁
@@ -320,7 +320,7 @@ async function renderStock() {
       .join("")}`;
 
   $$("#stock-table .btn-link-purchase").forEach((btn) =>
-    btn.addEventListener("click", () => openPurchaseModal(rows[Number(btn.dataset.idx)]))
+    btn.addEventListener("click", () => openPurchasePage(rows[Number(btn.dataset.idx)]))
   );
   $$("#stock-table .btn-link-edit").forEach((btn) =>
     btn.addEventListener("click", () => {
@@ -333,15 +333,17 @@ async function renderStock() {
   );
 }
 
-function openProductAddModal() {
+function openProductAddPage() {
   $("#product-add-form").reset();
   $("#pa-volume").value = 750;
-  $("#product-add-modal").hidden = false;
+  $("#pa-date").value = ymd(new Date());
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-product-add"));
   $("#pa-name").focus();
 }
 
-function closeProductAddModal() {
-  $("#product-add-modal").hidden = true;
+function closeProductAddPage() {
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-stock"));
+  renderStock();
 }
 
 async function submitProductAdd(e) {
@@ -355,10 +357,27 @@ async function submitProductAdd(e) {
   const volume_ml = parseInt($("#pa-volume").value) || 750;
   const list_price = parseFloat($("#pa-list-price").value) || 0;
 
+  const qtyInput = $("#pa-qty").value.trim();
+  const qty_in = qtyInput ? parseInt(qtyInput) : null;
+  const costInput = $("#pa-cost").value.trim();
+  const unit_cost = costInput ? parseFloat(costInput) : null;
+  if (qty_in && (isNaN(qty_in) || qty_in <= 0)) return alert("請輸入有效的進貨數量");
+  if (qty_in && (unit_cost === null || isNaN(unit_cost) || unit_cost < 0)) return alert("有進貨數量時，請輸入有效的進貨單價");
+
   try {
-    await api.addProduct({ name, producer, wine_type, vintage, volume_ml, list_price });
-    closeProductAddModal();
-    renderStock();
+    const product = await api.addProduct({ name, producer, wine_type, vintage, volume_ml, list_price });
+    if (qty_in) {
+      await api.addPurchase({
+        product_id: product.id,
+        supplier: null,
+        unit_cost,
+        qty_in,
+        location: $("#pa-location").value.trim() || null,
+        note: null,
+        purchased_at: $("#pa-date").value || undefined,
+      });
+    }
+    closeProductAddPage();
   } catch (err) {
     alert("新增失敗：" + err.message);
   }
@@ -377,13 +396,14 @@ function openProductEdit(r) {
   const hasStock = r.avg_cost != null;
   $("#pe-location").disabled = !hasStock;
   $("#pe-avg-cost").disabled = !hasStock;
-  $("#product-modal").hidden = false;
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-product-edit"));
   $("#pe-name").focus();
 }
 
 function closeProductEdit() {
-  $("#product-modal").hidden = true;
   _editProduct = null;
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-stock"));
+  renderStock();
 }
 
 async function submitProductEdit(e) {
@@ -408,7 +428,6 @@ async function submitProductEdit(e) {
       }
     }
     closeProductEdit();
-    renderStock();
   } catch (err) {
     alert("儲存失敗：" + err.message);
   }
@@ -426,22 +445,23 @@ async function handleDeleteProduct(id, name) {
 
 let _purchaseRow = null;
 
-function openPurchaseModal(r) {
+function openPurchasePage(r) {
   _purchaseRow = r;
-  $("#purchase-modal-product").textContent = `${r.name} · ${r.vintage ?? "NV"} · ${r.volume_ml}ml`;
+  $("#purchase-page-product").textContent = `${r.name} · ${r.vintage ?? "NV"} · ${r.volume_ml}ml`;
   $("#pc-location").value = r.location ?? "";
   $("#pc-supplier").value = "";
   $("#pc-cost").value = r.avg_cost ?? "";
   $("#pc-qty").value = "";
   $("#pc-date").value = ymd(new Date());
   $("#pc-note").value = "";
-  $("#purchase-modal").hidden = false;
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-purchase"));
   $("#pc-cost").focus();
 }
 
-function closePurchaseModal() {
-  $("#purchase-modal").hidden = true;
+function closePurchasePage() {
   _purchaseRow = null;
+  $$(".page").forEach((p) => (p.hidden = p.id !== "page-stock"));
+  renderStock();
 }
 
 async function submitPurchaseModal(e) {
@@ -461,8 +481,7 @@ async function submitPurchaseModal(e) {
       note: $("#pc-note").value.trim() || null,
       purchased_at: $("#pc-date").value || undefined,
     });
-    closePurchaseModal();
-    renderStock();
+    closePurchasePage();
   } catch (err) {
     alert("進貨失敗：" + err.message);
   }
