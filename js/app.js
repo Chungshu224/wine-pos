@@ -521,6 +521,28 @@ function monthlyReminderDate(createdAt) {
   const due = monthlyDueDate(createdAt);
   return new Date(due.getFullYear(), due.getMonth() + 1, 5); // 到期月的再下一個月5日
 }
+function statusCell(r) {
+  if (r.status === "void") {
+    const who = r.voided_by_profile?.display_name;
+    const d = r.voided_at
+      ? new Date(r.voided_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : "";
+    return `<span class="status-chip void">已作廢</span>${who || d ? `<br><span class="void-info">${esc(who ?? "")}${who && d ? " · " : ""}${d}</span>` : ""}`;
+  }
+  return `<span class="status-chip completed">已完成</span>`;
+}
+
+async function handleVoidOrder(orderId) {
+  if (!confirm("確定要作廢此訂單嗎？\n（會將已扣的庫存回補，並記錄作廢人與時間，此動作無法復原）")) return;
+  try {
+    await api.voidOrder(orderId);
+    await renderOrders();
+    checkPaymentReminders();
+  } catch (e) {
+    alert("作廢失敗：" + e.message);
+  }
+}
+
 function paymentStatusCell(r) {
   if (r.payment_method === "card") return `<span class="pay-tag pay-ok">刷卡✓</span>`;
   if (r.paid_at) {
@@ -566,7 +588,7 @@ async function renderOrders() {
       <tr>
         <td>${new Date(r.created_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
         <td><span class="order-no">${esc(r.order_no)}</span></td>
-        <td><span class="status-chip ${r.status}">${r.status === "completed" ? "已完成" : "已作廢"}</span></td>
+        <td>${statusCell(r)}</td>
         <td>${PAYMENT_LABEL[r.payment_method] ?? r.payment_method}</td>
         <td class="order-total">$${fmt(r.total)}</td>
         <td>${esc(r.customers?.name ?? "散客")}</td>
@@ -574,7 +596,10 @@ async function renderOrders() {
         <td>${esc(r.created_by_profile?.display_name ?? "-")}</td>
         <td><input type="text" class="invoice-no-input" data-id="${r.id}" value="${esc(r.invoice_no ?? "")}" placeholder="選填"></td>
         <td>${paymentStatusCell(r)}</td>
-        <td><button class="btn-link-print" data-id="${r.id}">列印</button></td>
+        <td class="row-actions">
+          <button class="btn-link-print" data-id="${r.id}">列印</button>
+          ${r.status === "completed" ? `<button class="btn-link-danger" data-id="${r.id}">作廢</button>` : ""}
+        </td>
       </tr>`).join("")}`;
 
   $$("#orders-table .btn-confirm-pay").forEach((btn) =>
@@ -582,6 +607,9 @@ async function renderOrders() {
   );
   $$("#orders-table .btn-link-print").forEach((btn) =>
     btn.addEventListener("click", () => printOrder(Number(btn.dataset.id)))
+  );
+  $$("#orders-table .btn-link-danger").forEach((btn) =>
+    btn.addEventListener("click", () => handleVoidOrder(Number(btn.dataset.id)))
   );
   $$("#orders-table .invoice-no-input").forEach((input) =>
     input.addEventListener("change", async () => {

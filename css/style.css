@@ -231,6 +231,7 @@ input[type="search"], input[type="number"], input[type="text"], select {
 }
 .status-chip.completed { background: #d4edda; color: var(--ok); }
 .status-chip.void { background: #f8d7da; color: var(--warn); }
+.void-info { color: var(--muted); font-size: .75rem; white-space: nowrap; }
 .order-total { font-weight: 500; }
 .invoice-no-input { width: 110px; }
 
