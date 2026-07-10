@@ -86,6 +86,18 @@ export async function addPurchase(batch) {
   return data;
 }
 
+// 修正某商品在特定庫位的未出清批次庫位/單價（用於庫存頁的「編輯」，非新增進貨）
+export async function updateBatchLocationAndCost(productId, oldLocation, { location, avgCost }) {
+  let q = sb
+    .from("purchase_batches")
+    .update({ location: location || null, unit_cost: avgCost })
+    .eq("product_id", productId)
+    .gt("qty_left", 0);
+  q = oldLocation ? q.eq("location", oldLocation) : q.is("location", null);
+  const { error } = await q;
+  if (error) throw error;
+}
+
 // ---------- 客戶 ----------
 export async function getCustomers(keyword = "") {
   let q = sb.from("customers").select("*").eq("is_active", true).order("name");

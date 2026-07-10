@@ -37,6 +37,12 @@ async function init() {
   // 庫存頁
   $("#stock-search").addEventListener("input", debounce(renderStock, 300));
   $("#add-product-btn").addEventListener("click", handleAddProduct);
+  $("#product-modal-backdrop").addEventListener("click", closeProductEdit);
+  $("#product-modal-cancel").addEventListener("click", closeProductEdit);
+  $("#product-form").addEventListener("submit", submitProductEdit);
+  $("#purchase-modal-backdrop").addEventListener("click", closePurchaseModal);
+  $("#purchase-modal-cancel").addEventListener("click", closePurchaseModal);
+  $("#purchase-form").addEventListener("submit", submitPurchaseModal);
 
   // 客戶頁
   $("#cust-search").addEventListener("input", debounce(renderCustomers, 300));
@@ -311,12 +317,12 @@ async function renderStock() {
       .join("")}`;
 
   $$("#stock-table .btn-link-purchase").forEach((btn) =>
-    btn.addEventListener("click", () => handleAddPurchase(rows[Number(btn.dataset.idx)]))
+    btn.addEventListener("click", () => openPurchaseModal(rows[Number(btn.dataset.idx)]))
   );
   $$("#stock-table .btn-link-edit").forEach((btn) =>
     btn.addEventListener("click", () => {
       const r = rows.find((x) => x.product_id == btn.dataset.id);
-      handleEditProduct(r);
+      openProductEdit(r);
     })
   );
   $$("#stock-table .btn-link-danger").forEach((btn) =>
@@ -345,20 +351,53 @@ async function handleAddProduct() {
   }
 }
 
-async function handleEditProduct(r) {
-  const name = prompt("酒款名稱：", r.name);
-  if (name === null) return;
-  const vintageInput = prompt("年份（NV 酒可留空）：", r.vintage ?? "");
-  const vintage = vintageInput ? parseInt(vintageInput) || null : null;
-  const volumeInput = prompt("容量 ml：", r.volume_ml);
-  const volume_ml = parseInt(volumeInput) || 750;
-  const priceInput = prompt("定價：", r.list_price);
-  const list_price = parseFloat(priceInput) || 0;
+let _editProduct = null;
+
+function openProductEdit(r) {
+  _editProduct = r;
+  $("#pe-location").value = r.location ?? "";
+  $("#pe-name").value = r.name;
+  $("#pe-vintage").value = r.vintage ?? "";
+  $("#pe-volume").value = r.volume_ml;
+  $("#pe-list-price").value = r.list_price;
+  $("#pe-avg-cost").value = r.avg_cost ?? "";
+  const hasStock = r.avg_cost != null;
+  $("#pe-location").disabled = !hasStock;
+  $("#pe-avg-cost").disabled = !hasStock;
+  $("#product-modal").hidden = false;
+  $("#pe-name").focus();
+}
+
+function closeProductEdit() {
+  $("#product-modal").hidden = true;
+  _editProduct = null;
+}
+
+async function submitProductEdit(e) {
+  e.preventDefault();
+  if (!_editProduct) return;
+  const r = _editProduct;
+  const name = $("#pe-name").value.trim();
+  if (!name) return;
+  const vintageInput = $("#pe-vintage").value.trim();
+  const vintage = vintageInput ? parseInt(vintageInput) : null;
+  const volume_ml = parseInt($("#pe-volume").value) || 750;
+  const list_price = parseFloat($("#pe-list-price").value) || 0;
+  const location = $("#pe-location").value.trim();
+  const avgCostInput = $("#pe-avg-cost").value;
+
   try {
     await api.updateProduct(r.product_id, { name, vintage, volume_ml, list_price });
+    if (r.avg_cost != null && avgCostInput !== "") {
+      const avgCost = parseFloat(avgCostInput);
+      if (!isNaN(avgCost)) {
+        await api.updateBatchLocationAndCost(r.product_id, r.location ?? null, { location, avgCost });
+      }
+    }
+    closeProductEdit();
     renderStock();
-  } catch (e) {
-    alert("編輯失敗：" + e.message);
+  } catch (err) {
+    alert("儲存失敗：" + err.message);
   }
 }
 
@@ -372,31 +411,47 @@ async function handleDeleteProduct(id, name) {
   }
 }
 
-async function handleAddPurchase(r) {
-  const location = prompt("庫位：", r.location ?? "");
-  if (location === null) return;
-  const supplier = prompt("供應商（可空）：") || null;
-  const costInput = prompt("進貨單價：");
-  if (!costInput) return;
-  const unit_cost = parseFloat(costInput);
+let _purchaseRow = null;
+
+function openPurchaseModal(r) {
+  _purchaseRow = r;
+  $("#purchase-modal-product").textContent = `${r.name} · ${r.vintage ?? "NV"} · ${r.volume_ml}ml`;
+  $("#pc-location").value = r.location ?? "";
+  $("#pc-supplier").value = "";
+  $("#pc-cost").value = r.avg_cost ?? "";
+  $("#pc-qty").value = "";
+  $("#pc-date").value = ymd(new Date());
+  $("#pc-note").value = "";
+  $("#purchase-modal").hidden = false;
+  $("#pc-cost").focus();
+}
+
+function closePurchaseModal() {
+  $("#purchase-modal").hidden = true;
+  _purchaseRow = null;
+}
+
+async function submitPurchaseModal(e) {
+  e.preventDefault();
+  if (!_purchaseRow) return;
+  const unit_cost = parseFloat($("#pc-cost").value);
+  const qty_in = parseInt($("#pc-qty").value);
   if (isNaN(unit_cost) || unit_cost < 0) return alert("請輸入有效單價");
-  const qtyInput = prompt("進貨數量：");
-  if (!qtyInput) return;
-  const qty_in = parseInt(qtyInput);
   if (isNaN(qty_in) || qty_in <= 0) return alert("請輸入有效數量");
-  const note = prompt("備註（可空）：") || null;
   try {
     await api.addPurchase({
-      product_id: r.product_id,
-      supplier,
+      product_id: _purchaseRow.product_id,
+      supplier: $("#pc-supplier").value.trim() || null,
       unit_cost,
       qty_in,
-      location: location || null,
-      note,
+      location: $("#pc-location").value.trim() || null,
+      note: $("#pc-note").value.trim() || null,
+      purchased_at: $("#pc-date").value || undefined,
     });
+    closePurchaseModal();
     renderStock();
-  } catch (e) {
-    alert("進貨失敗：" + e.message);
+  } catch (err) {
+    alert("進貨失敗：" + err.message);
   }
 }
 
