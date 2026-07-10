@@ -108,6 +108,12 @@ function switchTab(tab) {
 // ============================================
 async function renderPosProducts() {
   const kw = $("#pos-search").value.trim();
+  // 手機版：清單改為搜尋後才顯示，避免品項過多需滑很久才能選到品項
+  if (window.matchMedia("(max-width: 800px)").matches && !kw) {
+    posProducts = [];
+    $("#pos-products").innerHTML = `<div class="pos-hint">請輸入酒款名稱以搜尋</div>`;
+    return;
+  }
   posProducts = await api.getStockLocations(kw);
   const display = posProducts.filter((r) => r.stock_qty > 0);
   $("#pos-products").innerHTML = display
