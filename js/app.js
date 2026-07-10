@@ -36,7 +36,10 @@ async function init() {
 
   // 庫存頁
   $("#stock-search").addEventListener("input", debounce(renderStock, 300));
-  $("#add-product-btn").addEventListener("click", handleAddProduct);
+  $("#add-product-btn").addEventListener("click", openProductAddModal);
+  $("#product-add-modal-backdrop").addEventListener("click", closeProductAddModal);
+  $("#product-add-modal-cancel").addEventListener("click", closeProductAddModal);
+  $("#product-add-form").addEventListener("submit", submitProductAdd);
   $("#product-modal-backdrop").addEventListener("click", closeProductEdit);
   $("#product-modal-cancel").addEventListener("click", closeProductEdit);
   $("#product-form").addEventListener("submit", submitProductEdit);
@@ -330,24 +333,34 @@ async function renderStock() {
   );
 }
 
-async function handleAddProduct() {
-  const name = prompt("酒款名稱：");
+function openProductAddModal() {
+  $("#product-add-form").reset();
+  $("#pa-volume").value = 750;
+  $("#product-add-modal").hidden = false;
+  $("#pa-name").focus();
+}
+
+function closeProductAddModal() {
+  $("#product-add-modal").hidden = true;
+}
+
+async function submitProductAdd(e) {
+  e.preventDefault();
+  const name = $("#pa-name").value.trim();
   if (!name) return;
-  const producer = prompt("酒莊（可空）：") || null;
-  const wine_type =
-    prompt("類型 red/white/rose/sparkling/sweet/fortified/spirits/other（預設 red）：") || "red";
-  const vintageInput = prompt("年份（NV 酒可留空）：");
-  const vintage = vintageInput ? parseInt(vintageInput) || null : null;
-  const volumeInput = prompt("容量 ml（預設 750）：");
-  const volume_ml = volumeInput ? parseInt(volumeInput) || 750 : 750;
-  const priceInput = prompt("定價：");
-  const list_price = priceInput ? parseFloat(priceInput) || 0 : 0;
+  const producer = $("#pa-producer").value.trim() || null;
+  const wine_type = $("#pa-type").value;
+  const vintageInput = $("#pa-vintage").value.trim();
+  const vintage = vintageInput ? parseInt(vintageInput) : null;
+  const volume_ml = parseInt($("#pa-volume").value) || 750;
+  const list_price = parseFloat($("#pa-list-price").value) || 0;
 
   try {
     await api.addProduct({ name, producer, wine_type, vintage, volume_ml, list_price });
+    closeProductAddModal();
     renderStock();
-  } catch (e) {
-    alert("新增失敗：" + e.message);
+  } catch (err) {
+    alert("新增失敗：" + err.message);
   }
 }
 

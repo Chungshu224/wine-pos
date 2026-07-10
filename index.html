@@ -216,6 +216,55 @@
       </div>
     </div>
 
+    <!-- 新增酒款 Modal -->
+    <div id="product-add-modal" hidden>
+      <div class="dialog-backdrop" id="product-add-modal-backdrop"></div>
+      <div class="dialog-box">
+        <h3 class="dialog-title">新增酒款</h3>
+        <form id="product-add-form" class="edit-form">
+          <div class="form-full">
+            <label>酒款名稱 <span class="required">*</span>
+              <input id="pa-name" required>
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>酒莊
+              <input id="pa-producer" placeholder="選填">
+            </label>
+            <label>類型
+              <select id="pa-type">
+                <option value="red">紅酒</option>
+                <option value="white">白酒</option>
+                <option value="rose">粉紅酒</option>
+                <option value="sparkling">氣泡酒</option>
+                <option value="sweet">甜酒</option>
+                <option value="fortified">加烈酒</option>
+                <option value="spirits">烈酒</option>
+                <option value="other">其他</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>年份
+              <input id="pa-vintage" type="number" placeholder="NV 酒可留空">
+            </label>
+            <label>容量 (ml) <span class="required">*</span>
+              <input id="pa-volume" type="number" value="750" required>
+            </label>
+          </div>
+          <div class="form-full">
+            <label>定價 <span class="required">*</span>
+              <input id="pa-list-price" type="number" step="1" required>
+            </label>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" id="product-add-modal-cancel" class="btn-outline">取消</button>
+            <button type="submit" class="btn-primary">新增</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 編輯酒款 Modal -->
     <div id="product-modal" hidden>
       <div class="dialog-backdrop" id="product-modal-backdrop"></div>
