@@ -561,7 +561,7 @@ async function renderOrders() {
   });
 
   $("#orders-table").innerHTML = `
-    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>發票號碼</th><th>收款</th><th></th></tr>
+    <tr><th>時間</th><th>單號</th><th>狀態</th><th>付款</th><th>金額</th><th>顧客</th><th>品項數</th><th>製作表單人</th><th>發票號碼</th><th>收款</th><th></th></tr>
     ${rows.map((r) => `
       <tr>
         <td>${new Date(r.created_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
@@ -571,6 +571,7 @@ async function renderOrders() {
         <td class="order-total">$${fmt(r.total)}</td>
         <td>${esc(r.customers?.name ?? "散客")}</td>
         <td>${r.order_items?.length ?? 0} 件</td>
+        <td>${esc(r.created_by_profile?.display_name ?? "-")}</td>
         <td><input type="text" class="invoice-no-input" data-id="${r.id}" value="${esc(r.invoice_no ?? "")}" placeholder="選填"></td>
         <td>${paymentStatusCell(r)}</td>
         <td><button class="btn-link-print" data-id="${r.id}">列印</button></td>

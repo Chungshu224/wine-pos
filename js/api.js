@@ -129,7 +129,7 @@ export async function createOrder({ customerId, payment, note, items }) {
 export async function getOrders({ keyword = "", status = "", dateFrom = "", dateTo = "", limit = 30, offset = 0 } = {}) {
   let q = sb
     .from("orders")
-    .select("*, customers(name), order_items(id), paid_by_profile:profiles!orders_paid_by_fkey(display_name)", { count: "exact" })
+    .select("*, customers(name), order_items(id), created_by_profile:profiles!orders_created_by_fkey(display_name), paid_by_profile:profiles!orders_paid_by_fkey(display_name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
