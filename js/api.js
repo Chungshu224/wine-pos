@@ -153,8 +153,8 @@ export async function getOrderById(id) {
   return data;
 }
 
-export async function voidOrder(orderId) {
-  const { error } = await sb.rpc("void_order", { p_order_id: orderId });
+export async function voidOrder(orderId, reason) {
+  const { error } = await sb.rpc("void_order", { p_order_id: orderId, p_reason: reason });
   if (error) throw error;
 }
 

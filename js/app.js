@@ -527,15 +527,19 @@ function statusCell(r) {
     const d = r.voided_at
       ? new Date(r.voided_at).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
       : "";
-    return `<span class="status-chip void">已作廢</span>${who || d ? `<br><span class="void-info">${esc(who ?? "")}${who && d ? " · " : ""}${d}</span>` : ""}`;
+    const whoLine = who || d ? `<br><span class="void-info">${esc(who ?? "")}${who && d ? " · " : ""}${d}</span>` : "";
+    const reasonLine = r.void_reason ? `<br><span class="void-info">原因：${esc(r.void_reason)}</span>` : "";
+    return `<span class="status-chip void">已作廢</span>${whoLine}${reasonLine}`;
   }
   return `<span class="status-chip completed">已完成</span>`;
 }
 
 async function handleVoidOrder(orderId) {
-  if (!confirm("確定要作廢此訂單嗎？\n（會將已扣的庫存回補，並記錄作廢人與時間，此動作無法復原）")) return;
+  const reason = prompt("請輸入作廢原因：\n（會將已扣的庫存回補，並記錄作廢人、時間與原因，此動作無法復原）");
+  if (reason === null) return; // 使用者取消
+  if (!reason.trim()) return alert("請填寫作廢原因");
   try {
-    await api.voidOrder(orderId);
+    await api.voidOrder(orderId, reason.trim());
     await renderOrders();
     checkPaymentReminders();
   } catch (e) {
